@@ -4,34 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Notas de Consumo</title>
-<meta name="theme-color" content="#0f5132">
+<meta name="theme-color" content="#0b2545">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{
-  --bg:#f4f6f5; --card:#fff; --text:#1c2421; --muted:#66736d; --line:#dde3e0;
-  --pri:#0f5132; --pri2:#198754; --priText:#fff; --warn:#fff4d6; --warnLine:#e6c35c; --danger:#b42318;
+  --bg:#eef2f7; --card:#fff; --text:#16202e; --muted:#5f6b7a; --line:#d8e0ea;
+  --pri:#0b2545; --pri2:#1560bd; --acc:#f2b705; --priText:#fff; --warn:#fff4d6; --warnLine:#e6c35c; --danger:#b42318;
   --radius:14px;
 }
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#121714; --card:#1b221e; --text:#e7ece9; --muted:#9aa7a0; --line:#2c3631;
-    --pri:#2f9e6a; --pri2:#3dbb80; --warn:#3a3218; --warnLine:#8a7330; --danger:#f0776b; }
+  :root{ --bg:#0d1420; --card:#162133; --text:#e6edf6; --muted:#98a6b8; --line:#26354b;
+    --pri:#08182e; --pri2:#2f7ee0; --warn:#3a3218; --warnLine:#8a7330; --danger:#f0776b; }
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 "Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.cond{font-family:"Barlow Condensed","Barlow",system-ui,sans-serif}
 body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .wrap{max-width:640px;margin:0 auto;padding:0 16px}
-header{background:var(--pri);color:var(--priText);padding:calc(14px + env(safe-area-inset-top)) 0 18px}
-header .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-header h1{font-size:15px;font-weight:600;margin:0;opacity:.85;letter-spacing:.02em}
-#nomeApuracao{width:100%;margin-top:6px;background:transparent;border:0;border-bottom:1px dashed rgba(255,255,255,.4);color:#fff;font-size:22px;font-weight:700;padding:2px 0}
-#nomeApuracao:focus{outline:none;border-bottom-color:#fff}
-.stats{display:flex;gap:24px;margin-top:12px}
-.stats div span{display:block;font-size:12px;opacity:.8}
-.stats div b{font-size:22px}
-.iconbtn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:10px;width:40px;height:40px;display:grid;place-items:center;cursor:pointer}
+header{position:relative;overflow:hidden;color:#fff;padding:calc(14px + env(safe-area-inset-top)) 0 20px;
+  background:linear-gradient(135deg,#0b2545 0%,#13396b 60%,#1560bd 130%)}
+header::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.07;
+  background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:22px 22px}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;
+  background:repeating-linear-gradient(-45deg,var(--acc) 0 12px,#0b2545 12px 24px)}
+header .wrap{position:relative}
+header .top{display:flex;align-items:center;gap:12px}
+.logo{height:44px;min-width:44px;padding:5px 8px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.logo img{height:100%;width:auto;max-width:120px;object-fit:contain;display:block}
+.logo .txt{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:24px;letter-spacing:.06em;color:#0b2545;line-height:1}
+.brand{flex:1;min-width:0;display:flex;flex-direction:column;border-left:2px solid rgba(255,255,255,.25);padding-left:12px}
+.brand h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:700;margin:0;letter-spacing:.08em;text-transform:uppercase;line-height:1.05}
+.brand small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);font-weight:600}
+.namebox{margin-top:16px}
+.namebox label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.7;font-weight:600}
+#nomeApuracao{width:100%;margin-top:2px;background:transparent;border:0;border-bottom:1px dashed rgba(255,255,255,.35);color:#fff;font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:600;letter-spacing:.02em;padding:2px 0}
+#nomeApuracao:focus{outline:none;border-bottom-color:var(--acc)}
+.stats{display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:14px}
+.stats div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 14px;backdrop-filter:blur(2px)}
+.stats div span{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.75;font-weight:600}
+.stats div b{font-family:"Barlow Condensed",sans-serif;font-size:28px;font-weight:700;letter-spacing:.02em;line-height:1.1}
+.stats div:last-child b{color:#fff}
+.iconbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:10px;width:42px;height:42px;display:grid;place-items:center;cursor:pointer;flex:none}
 .iconbtn svg{width:22px;height:22px}
 .capture{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin:16px 0}
 .btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:12px 14px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
@@ -46,18 +64,25 @@ header h1{font-size:15px;font-weight:600;margin:0;opacity:.85;letter-spacing:.02
 .item .info{flex:1;min-width:0}
 .item .desc{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item .date{font-size:13px;color:var(--muted)}
-.item .val{font-weight:700;white-space:nowrap}
+.item .val{font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:700;white-space:nowrap}
+.item .del{flex:none;width:36px;height:36px;margin-left:-4px;border:0;background:transparent;color:var(--muted);border-radius:8px;display:grid;place-items:center;cursor:pointer}
+.item .del:hover,.item .del:active{background:rgba(180,35,24,.1);color:var(--danger)}
+.item .del svg{width:19px;height:19px}
 .empty{text-align:center;color:var(--muted);padding:40px 16px;border:2px dashed var(--line);border-radius:var(--radius)}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
 .bar .wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 dialog{border:0;border-radius:18px;padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);background:var(--card);color:var(--text)}
 dialog::backdrop{background:rgba(0,0,0,.5)}
 .dlg{padding:18px;display:flex;flex-direction:column;gap:12px}
-.dlg h2{margin:0;font-size:18px}
-.dlg .row{display:flex;gap:10px;flex-wrap:wrap}
-.dlg .row>*{flex:1}
+.dlg h2{margin:0;font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.dlg .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dlg .row>*{min-width:0}
+@media (max-width:480px){ .dlg .row{grid-template-columns:1fr} }
 label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
 label.f input,label.f textarea{font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+label.f input{min-width:0;max-width:100%;display:block;min-height:46px}
+label.f input[type=date]{-webkit-appearance:none;appearance:none;text-align:left}
+label.f input[type=date]::-webkit-date-and-time-value{text-align:left}
 label.f input.chk{background:var(--warn);border-color:var(--warnLine)}
 .hint{font-size:12px;color:var(--muted);margin:0}
 .prev{position:relative;background:var(--bg);border-radius:12px;overflow:hidden;text-align:center}
@@ -83,12 +108,21 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 <header>
   <div class="wrap">
     <div class="top">
-      <h1>NOTAS DE CONSUMO</h1>
+      <div class="logo" id="logoBox">
+        <img src="logo.png" alt="VIGO" onerror="this.remove();document.getElementById('logoBox').innerHTML='<span class=&quot;txt&quot;>VIGO</span>'">
+      </div>
+      <div class="brand">
+        <small>Controle de despesas</small>
+        <h1>Notas de Consumo</h1>
+      </div>
       <button class="iconbtn" id="btnMenu" aria-label="Menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
       </button>
     </div>
-    <input id="nomeApuracao" aria-label="Nome da apuração" autocomplete="off">
+    <div class="namebox">
+      <label for="nomeApuracao">Apuração</label>
+      <input id="nomeApuracao" autocomplete="off">
+    </div>
     <div class="stats">
       <div><span>Notas</span><b id="stQtd">0</b></div>
       <div><span>Total</span><b id="stTotal">R$ 0,00</b></div>
@@ -245,16 +279,23 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 /* ================= banco local (IndexedDB) ================= */
 const DB = {
   db:null,
-  open(){ return new Promise((res,rej)=>{ const r=indexedDB.open('notasConsumo',1);
-    r.onupgradeneeded=()=>{ const d=r.result; d.createObjectStore('meta'); d.createObjectStore('notas',{keyPath:'id'}); };
-    r.onsuccess=()=>{ this.db=r.result; res(); }; r.onerror=()=>rej(r.error); }); },
-  tx(store,mode,fn){ return new Promise((res,rej)=>{ const t=this.db.transaction(store,mode); const s=t.objectStore(store); const out=fn(s); t.oncomplete=()=>res(out instanceof IDBRequest?out.result:out); t.onerror=()=>rej(t.error); }); },
+  mem:null, // modo memória (quando o navegador bloqueia o armazenamento)
+  open(){ return new Promise((res)=>{
+    const fallback=()=>{ this.mem={meta:new Map(),notas:new Map()}; setTimeout(()=>toast('Modo de teste: as notas não ficam salvas neste navegador.',5000),300); res(); };
+    try{ const r=indexedDB.open('notasConsumo',1);
+      r.onupgradeneeded=()=>{ const d=r.result; d.createObjectStore('meta'); d.createObjectStore('notas',{keyPath:'id'}); };
+      r.onsuccess=()=>{ this.db=r.result; res(); }; r.onerror=fallback; r.onblocked=fallback;
+    }catch(e){ fallback(); } }); },
+  tx(store,mode,fn){ if(this.mem) return Promise.resolve(fn(this.memStore(store))); return new Promise((res,rej)=>{ const t=this.db.transaction(store,mode); const s=t.objectStore(store); const out=fn(s); t.oncomplete=()=>res(out instanceof IDBRequest?out.result:out); t.onerror=()=>rej(t.error); }); },
   getMeta(){ return this.tx('meta','readonly',s=>s.get('atual')); },
   setMeta(m){ return this.tx('meta','readwrite',s=>s.put(m,'atual')); },
   all(){ return this.tx('notas','readonly',s=>s.getAll()); },
   put(n){ return this.tx('notas','readwrite',s=>s.put(n)); },
   del(id){ return this.tx('notas','readwrite',s=>s.delete(id)); },
   clear(){ return this.tx('notas','readwrite',s=>s.clear()); },
+  memStore(nome){ const m=this.mem[nome]; return {
+    get:k=>m.get(k), getAll:()=>[...m.values()], delete:k=>m.delete(k), clear:()=>m.clear(),
+    put:(v,k)=>m.set(k!==undefined?k:v.id, v) }; },
 };
 
 /* ================= estado ================= */
@@ -277,14 +318,19 @@ function render(){
   if(!notas.length){ L.innerHTML='<div class="empty">Nenhuma nota ainda.<br>Toque em <b>Fotografar nota</b> para começar.</div>'; return; }
   ordenadas().reverse().forEach(n=>{
     const el=document.createElement('div'); el.className='item';
-    el.innerHTML=`<img alt=""><div class="info"><div class="desc"></div><div class="date"></div></div><div class="val"></div>`;
+    el.innerHTML=`<img alt=""><div class="info"><div class="desc"></div><div class="date"></div></div><div class="val"></div><button class="del" aria-label="Excluir lançamento" title="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>`;
     el.querySelector('img').src=n.img;
     el.querySelector('.desc').textContent=n.desc||'(sem descrição)';
     el.querySelector('.date').textContent=fmtData(n.data);
     el.querySelector('.val').textContent=BRL.format(n.valor||0);
     el.onclick=()=>abrirEditor(n);
+    el.querySelector('.del').onclick=e=>{ e.stopPropagation(); excluirNota(n); };
     L.appendChild(el);
   });
+}
+async function excluirNota(n){
+  if(!confirm(`Excluir este lançamento?\n\n${fmtData(n.data)} • ${n.desc||'(sem descrição)'} • ${BRL.format(n.valor||0)}`)) return;
+  await DB.del(n.id); notas=notas.filter(x=>x.id!==n.id); render(); toast('Lançamento excluído');
 }
 $('#nomeApuracao').addEventListener('change',async e=>{ meta.nome=e.target.value.trim()||meta.nome; await DB.setMeta(meta); render(); });
 
@@ -463,7 +509,7 @@ async function gerarPDF(){
     head:[['Nº','Data','Descrição','Valor (R$)']],
     body:lista.map((n,i)=>[String(i+1),fmtData(n.data),n.desc||'-',BRL.format(n.valor).replace('R$','').trim()]),
     foot:[['','','TOTAL',BRL.format(total).replace('R$','').trim()]],
-    styles:{fontSize:9.5,cellPadding:2.2}, headStyles:{fillColor:[15,81,50]}, footStyles:{fillColor:[232,240,236],textColor:20,fontStyle:'bold'},
+    styles:{fontSize:9.5,cellPadding:2.2}, headStyles:{fillColor:[11,37,69]}, footStyles:{fillColor:[228,236,246],textColor:20,fontStyle:'bold'},
     columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:24},3:{cellWidth:32,halign:'right'}},
     didParseCell:d=>{ if(d.section!=='body'&&d.column.index===3) d.cell.styles.halign='right'; },
     showFoot:'lastPage',
