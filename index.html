@@ -100,6 +100,35 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 .drivelist{display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow:auto}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:99}
 .toast.show{opacity:1}
+.pednum{font-family:"Barlow Condensed",sans-serif;font-size:34px;font-weight:800;letter-spacing:.03em;line-height:1.05;margin-top:2px}
+#nomeApuracao{font-size:18px!important;font-weight:500!important;margin-top:4px!important}
+#nomeApuracao::placeholder{color:rgba(255,255,255,.55)}
+.tabs{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.tabs .wrap{display:grid;grid-template-columns:1fr 1fr}
+.tabs button{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:13px 6px 11px;font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.tabs button.on{color:var(--pri2);border-bottom-color:var(--pri2)}
+.tabs .cnt{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:var(--line);color:var(--text);font-size:13px;letter-spacing:0}
+.tabs .cnt:empty{display:none}
+.dia{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:8px 2px -2px}
+.ped{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--pri2);border-radius:var(--radius);padding:10px 12px;cursor:pointer}
+.ped .pn{flex:none;text-align:center;min-width:62px}
+.ped .pn small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ped .pn b{font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:800}
+.ped .info{flex:1;min-width:0}
+.ped .desc{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ped .date{font-size:13px;color:var(--muted)}
+.ped .pr{text-align:right;flex:none}
+.ped .val{font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:700}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--warn);color:#7a5a00}
+.badge.ok{background:#dcecff;color:#0b4a9c}
+.pnlist{max-height:30vh;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.pnl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:8px 10px;font-size:14px;border-bottom:1px solid var(--line)}
+.pnl:last-child{border-bottom:0}
+.pnl span:first-child{color:var(--muted)}
+.pnl span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.tabs button:focus{outline:none}.tabs button:focus-visible{outline:2px solid var(--pri2)}
+.row2 .btn{justify-content:center}
 .hidden{display:none!important}
 </style>
 </head>
@@ -120,8 +149,9 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
       </button>
     </div>
     <div class="namebox">
-      <label for="nomeApuracao">Apuração</label>
-      <input id="nomeApuracao" autocomplete="off">
+      <label for="nomeApuracao">Pedido em aberto</label>
+      <div class="pednum" id="pedNum">Nº 0001</div>
+      <input id="nomeApuracao" autocomplete="off" placeholder="Referência (opcional) – ex.: Obra X / Setembro">
     </div>
     <div class="stats">
       <div><span>Notas</span><b id="stQtd">0</b></div>
@@ -130,7 +160,13 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
   </div>
 </header>
 
+<nav class="tabs"><div class="wrap">
+  <button data-tab="lanc" class="on">Lançamentos</button>
+  <button data-tab="ped">Pedidos <span class="cnt" id="pedCount"></span></button>
+</div></nav>
+
 <main class="wrap">
+ <section id="vLanc">
   <div class="capture">
     <label class="btn pri big">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
@@ -144,17 +180,18 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
     </label>
   </div>
   <div class="list" id="lista"></div>
+ </section>
+ <section id="vPed" class="hidden">
+  <p class="hint" style="margin:16px 0 10px">Últimos pedidos fechados. Toque para ver, baixar ou refazer.</p>
+  <div class="list" id="listaPed"></div>
+ </section>
 </main>
 
-<div class="bar">
+<div class="bar" id="barLanc">
   <div class="wrap">
-    <button class="btn" id="btnDrive">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/><path d="M12 11v6m-3-3 3 3 3-3"/></svg>
-      Google Drive
-    </button>
-    <button class="btn pri" id="btnPdf">
+    <button class="btn pri big" id="btnPdf" style="grid-column:1/-1">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>
-      Gerar relatório
+      <span id="btnPdfTxt">Fechar pedido e gerar relatório</span>
     </button>
   </div>
 </div>
@@ -192,10 +229,11 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
     <div class="menu">
       <button class="btn" data-act="config">Configurações</button>
       <div class="sep"></div>
+      <button class="btn" data-act="drive">Backup no Google Drive</button>
       <button class="btn" data-act="exportar">Salvar backup no aparelho (.json)</button>
       <button class="btn" data-act="importar">Abrir backup do aparelho (.json)</button>
       <div class="sep"></div>
-      <button class="btn danger" data-act="nova">Iniciar nova apuração</button>
+      <button class="btn danger" data-act="limpar">Apagar notas do pedido em aberto</button>
     </div>
     <div class="actions"><button class="btn" data-close>Fechar</button></div>
   </div>
@@ -208,6 +246,8 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
     <h2>Configurações</h2>
     <label class="f">Nome do responsável (sai no relatório)<input id="cResp"></label>
     <label class="f">Empresa / obra / centro de custo (opcional)<input id="cEmpresa"></label>
+    <label class="f">Número do pedido em aberto<input id="cNum" type="number" min="1" inputmode="numeric"></label>
+    <p class="hint">Os próximos pedidos seguem a sequência a partir deste número.</p>
     <div class="sep"></div>
     <label class="f">Google Client ID (para usar o Drive)<input id="cClient" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off"></label>
     <p class="hint">Veja no guia como gerar esse código. Sem ele, o app funciona normalmente, só sem o Drive.</p>
@@ -221,11 +261,11 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 <!-- Drive -->
 <dialog id="dlgDrive">
   <div class="dlg">
-    <h2>Google Drive</h2>
-    <p class="hint" id="driveInfo">Os arquivos ficam na pasta <b>Notas de Consumo</b> do seu Drive.</p>
+    <h2>Backup no Drive</h2>
+    <p class="hint" id="driveInfo">Guarda as notas em aberto e o histórico de pedidos na pasta <b>Notas de Consumo</b> do seu Drive. Use para passar os dados para outro aparelho.</p>
     <div class="menu">
-      <button class="btn" id="btnDriveSalvar">Salvar esta apuração no Drive</button>
-      <button class="btn" id="btnDriveAbrir">Abrir uma apuração do Drive</button>
+      <button class="btn" id="btnDriveSalvar">Salvar backup no Drive</button>
+      <button class="btn" id="btnDriveAbrir">Abrir backup do Drive</button>
     </div>
     <div class="drivelist" id="driveLista"></div>
     <div class="status" id="driveStatus"></div>
@@ -233,17 +273,35 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
   </div>
 </dialog>
 
-<!-- Relatório -->
-<dialog id="dlgPdf">
+<!-- Fechar pedido -->
+<dialog id="dlgFechar">
   <div class="dlg">
-    <h2>Relatório pronto</h2>
-    <p class="hint" id="pdfInfo"></p>
+    <h2 id="fecharTitulo">Fechar pedido</h2>
+    <p id="fecharInfo" style="margin:0;font-weight:600"></p>
+    <p class="hint" id="fecharHint"></p>
     <div class="menu">
-      <a class="btn pri" id="pdfBaixar" download>Baixar PDF</a>
-      <button class="btn" id="pdfCompartilhar">Compartilhar (WhatsApp, e-mail…)</button>
-      <button class="btn" id="pdfDrive">Salvar PDF no Google Drive</button>
+      <button class="btn pri" id="btnFecharDrive">Gerar relatório e salvar no Google Drive</button>
+      <button class="btn" id="btnFecharLocal">Gerar e só baixar o PDF</button>
     </div>
-    <div class="status" id="pdfStatus"></div>
+    <div class="status" id="fecharStatus"></div>
+    <div class="actions"><button class="btn" id="btnFecharCancel">Cancelar</button></div>
+  </div>
+</dialog>
+
+<!-- Detalhes do pedido -->
+<dialog id="dlgPedido">
+  <div class="dlg">
+    <h2 id="pedTitulo">Pedido</h2>
+    <p class="hint" id="pedInfo"></p>
+    <div class="pnlist" id="pedNotas"></div>
+    <div class="menu">
+      <a class="btn pri" id="pedAbrirDrive" target="_blank" rel="noopener">Abrir no Google Drive</a>
+      <button class="btn pri" id="pedEnviarDrive">Enviar PDF ao Google Drive</button>
+      <div class="row2"><button class="btn" id="pedBaixar">Baixar PDF</button><button class="btn" id="pedCompartilhar">Compartilhar</button></div>
+      <button class="btn danger" id="pedRefazer">Relatório errado? Excluir e refazer</button>
+      <button class="btn danger" id="pedExcluirHist">Remover do histórico</button>
+    </div>
+    <div class="status" id="pedStatus"></div>
     <div class="actions"><button class="btn" data-close>Fechar</button></div>
   </div>
 </dialog>
@@ -281,9 +339,12 @@ const DB = {
   db:null,
   mem:null, // modo memória (quando o navegador bloqueia o armazenamento)
   open(){ return new Promise((res)=>{
-    const fallback=()=>{ this.mem={meta:new Map(),notas:new Map()}; setTimeout(()=>toast('Modo de teste: as notas não ficam salvas neste navegador.',5000),300); res(); };
-    try{ const r=indexedDB.open('notasConsumo',1);
-      r.onupgradeneeded=()=>{ const d=r.result; d.createObjectStore('meta'); d.createObjectStore('notas',{keyPath:'id'}); };
+    const fallback=()=>{ this.mem={meta:new Map(),notas:new Map(),pedidos:new Map()}; setTimeout(()=>toast('Modo de teste: as notas não ficam salvas neste navegador.',5000),300); res(); };
+    try{ const r=indexedDB.open('notasConsumo',2);
+      r.onupgradeneeded=()=>{ const d=r.result;
+        if(!d.objectStoreNames.contains('meta')) d.createObjectStore('meta');
+        if(!d.objectStoreNames.contains('notas')) d.createObjectStore('notas',{keyPath:'id'});
+        if(!d.objectStoreNames.contains('pedidos')) d.createObjectStore('pedidos',{keyPath:'id'}); };
       r.onsuccess=()=>{ this.db=r.result; res(); }; r.onerror=fallback; r.onblocked=fallback;
     }catch(e){ fallback(); } }); },
   tx(store,mode,fn){ if(this.mem) return Promise.resolve(fn(this.memStore(store))); return new Promise((res,rej)=>{ const t=this.db.transaction(store,mode); const s=t.objectStore(store); const out=fn(s); t.oncomplete=()=>res(out instanceof IDBRequest?out.result:out); t.onerror=()=>rej(t.error); }); },
@@ -293,32 +354,45 @@ const DB = {
   put(n){ return this.tx('notas','readwrite',s=>s.put(n)); },
   del(id){ return this.tx('notas','readwrite',s=>s.delete(id)); },
   clear(){ return this.tx('notas','readwrite',s=>s.clear()); },
+  pedAll(){ return this.tx('pedidos','readonly',s=>s.getAll()); },
+  pedPut(p){ return this.tx('pedidos','readwrite',s=>s.put(p)); },
+  pedDel(id){ return this.tx('pedidos','readwrite',s=>s.delete(id)); },
   memStore(nome){ const m=this.mem[nome]; return {
     get:k=>m.get(k), getAll:()=>[...m.values()], delete:k=>m.delete(k), clear:()=>m.clear(),
     put:(v,k)=>m.set(k!==undefined?k:v.id, v) }; },
 };
 
 /* ================= estado ================= */
-let meta = null, notas = [];
-function novaMeta(){ const d=new Date(); const m=d.toLocaleDateString('pt-BR',{month:'long'}); return {id:uid(), nome:`Despesas ${m[0].toUpperCase()+m.slice(1)}/${d.getFullYear()}`, criado:new Date().toISOString(), driveFileId:null}; }
+let meta = null, notas = [], pedidos = [];
+const fmtNum = n => String(n||0).padStart(4,'0');
+const proximoNumero = () => Math.max(0,...pedidos.map(p=>p.numero||0))+1;
+function novaMeta(numero){ return {id:uid(), numero, nome:'', criado:new Date().toISOString(), driveFileId:null}; }
 async function carregar(){
   await DB.open();
+  pedidos = (await DB.pedAll()) || [];
   meta = await DB.getMeta();
-  if(!meta){ meta=novaMeta(); await DB.setMeta(meta); }
+  if(!meta){ meta=novaMeta(proximoNumero()); await DB.setMeta(meta); }
+  if(!meta.numero){ meta.numero=proximoNumero(); if(/^Despesas /.test(meta.nome||'')) meta.nome=''; await DB.setMeta(meta); }
   notas = await DB.all();
   render();
 }
-function ordenadas(){ return [...notas].sort((a,b)=> (a.data||'').localeCompare(b.data||'') || a.criado.localeCompare(b.criado)); }
+function ordenar(lista){ return [...lista].sort((a,b)=> (a.data||'').localeCompare(b.data||'') || (a.criado||'').localeCompare(b.criado||'')); }
+function ordenadas(){ return ordenar(notas); }
+const ICON_LIXO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
 function render(){
-  $('#nomeApuracao').value = meta.nome;
+  $('#pedNum').textContent = 'Nº '+fmtNum(meta.numero);
+  $('#nomeApuracao').value = meta.nome||'';
   const total = notas.reduce((s,n)=>s+(n.valor||0),0);
   $('#stQtd').textContent = notas.length;
   $('#stTotal').textContent = BRL.format(total);
+  $('#btnPdfTxt').textContent = `Fechar Pedido Nº ${fmtNum(meta.numero)} e gerar relatório`;
   const L=$('#lista'); L.innerHTML='';
-  if(!notas.length){ L.innerHTML='<div class="empty">Nenhuma nota ainda.<br>Toque em <b>Fotografar nota</b> para começar.</div>'; return; }
-  ordenadas().reverse().forEach(n=>{
+  if(!notas.length){ L.innerHTML='<div class="empty">Nenhuma nota neste pedido.<br>Toque em <b>Fotografar nota</b> para começar.</div>'; }
+  let diaAnt=null;
+  ordenadas().forEach(n=>{
+    if(n.data!==diaAnt){ diaAnt=n.data; const h=document.createElement('div'); h.className='dia'; h.textContent=rotuloDia(n.data); L.appendChild(h); }
     const el=document.createElement('div'); el.className='item';
-    el.innerHTML=`<img alt=""><div class="info"><div class="desc"></div><div class="date"></div></div><div class="val"></div><button class="del" aria-label="Excluir lançamento" title="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>`;
+    el.innerHTML=`<img alt=""><div class="info"><div class="desc"></div><div class="date"></div></div><div class="val"></div><button class="del" aria-label="Excluir lançamento" title="Excluir">${ICON_LIXO}</button>`;
     el.querySelector('img').src=n.img;
     el.querySelector('.desc').textContent=n.desc||'(sem descrição)';
     el.querySelector('.date').textContent=fmtData(n.data);
@@ -327,12 +401,43 @@ function render(){
     el.querySelector('.del').onclick=e=>{ e.stopPropagation(); excluirNota(n); };
     L.appendChild(el);
   });
+  renderPedidos();
+}
+function rotuloDia(iso){
+  if(!iso) return 'Sem data';
+  const d=new Date(iso+'T12:00:00'); const s=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+  return s[0].toUpperCase()+s.slice(1);
 }
 async function excluirNota(n){
   if(!confirm(`Excluir este lançamento?\n\n${fmtData(n.data)} • ${n.desc||'(sem descrição)'} • ${BRL.format(n.valor||0)}`)) return;
   await DB.del(n.id); notas=notas.filter(x=>x.id!==n.id); render(); toast('Lançamento excluído');
 }
-$('#nomeApuracao').addEventListener('change',async e=>{ meta.nome=e.target.value.trim()||meta.nome; await DB.setMeta(meta); render(); });
+$('#nomeApuracao').addEventListener('change',async e=>{ meta.nome=e.target.value.trim(); await DB.setMeta(meta); });
+
+/* ================= abas ================= */
+function trocarAba(aba){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===aba));
+  $('#vLanc').classList.toggle('hidden',aba!=='lanc'); $('#vPed').classList.toggle('hidden',aba!=='ped');
+  $('#barLanc').classList.toggle('hidden',aba!=='lanc');
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>trocarAba(b.dataset.tab));
+function renderPedidos(){
+  $('#pedCount').textContent = pedidos.length ? pedidos.length : '';
+  const L=$('#listaPed'); L.innerHTML='';
+  if(!pedidos.length){ L.innerHTML='<div class="empty">Nenhum pedido fechado ainda.<br>Quando você gerar o relatório, o pedido aparece aqui.</div>'; return; }
+  [...pedidos].sort((a,b)=>b.numero-a.numero).forEach(p=>{
+    const el=document.createElement('div'); el.className='ped';
+    el.innerHTML=`<div class="pn"><small>Pedido</small><b></b></div><div class="info"><div class="desc"></div><div class="date"></div></div><div class="pr"><div class="val"></div><span class="badge"></span></div>`;
+    el.querySelector('.pn b').textContent=fmtNum(p.numero);
+    el.querySelector('.desc').textContent=p.ref||`${p.qtd} notas`;
+    el.querySelector('.date').textContent=`${p.ref?p.qtd+' notas • ':''}fechado em ${new Date(p.fechado).toLocaleDateString('pt-BR')}`;
+    el.querySelector('.val').textContent=BRL.format(p.total);
+    const bd=el.querySelector('.badge'); bd.textContent=p.drive?'No Drive':'Só no aparelho'; bd.classList.toggle('ok',!!p.drive);
+    el.onclick=()=>abrirPedido(p);
+    L.appendChild(el);
+  });
+}
 
 /* ================= imagem ================= */
 function carregarImagem(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; }); }
@@ -492,18 +597,22 @@ $('#inCamera').onchange=e=>{ receberArquivos(e.target.files); e.target.value='';
 $('#inGaleria').onchange=e=>{ receberArquivos(e.target.files); e.target.value=''; };
 
 /* ================= relatório PDF ================= */
-let ultimoPdf=null;
-async function gerarPDF(){
-  const cfg=cfgGet(); const lista=ordenadas();
+async function gerarPDF(ped){
+  const cfg=cfgGet(); const lista=ordenar(ped.notas);
   const { jsPDF }=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
   const W=210,H=297,M=15; let y=M;
-  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('RELATÓRIO DE DESPESAS',M,y+2); y+=9;
-  doc.setFontSize(12); doc.text(meta.nome,M,y); y+=7;
-  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  const numTxt=`PEDIDO Nº ${fmtNum(ped.numero)}`;
+  doc.setFillColor(11,37,69); doc.rect(0,0,W,26,'F');
+  doc.setFillColor(242,183,5); doc.rect(0,26,W,1.5,'F');
+  doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.text('RELATÓRIO DE DESPESAS',M,12);
+  doc.setFontSize(12); doc.text(numTxt,M,20);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text('Notas de consumo',W-M,12,{align:'right'});
+  doc.setTextColor(0); y=36;
+  doc.setFontSize(10);
   const total=lista.reduce((s,n)=>s+n.valor,0);
   const periodo=lista.length?`${fmtData(lista[0].data)} a ${fmtData(lista[lista.length-1].data)}`:'-';
-  const info=[['Responsável',cfg.resp||'-'], ...(cfg.empresa?[['Empresa / obra',cfg.empresa]]:[]), ['Período',periodo], ['Quantidade de notas',String(lista.length)], ['Emitido em',new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})]];
-  info.forEach(([k,v])=>{ doc.setFont('helvetica','bold'); doc.text(k+':',M,y); doc.setFont('helvetica','normal'); doc.text(v,M+42,y); y+=5.5; });
+  const info=[['Pedido',fmtNum(ped.numero)], ...(ped.ref?[['Referência',ped.ref]]:[]), ['Responsável',cfg.resp||'-'], ...(cfg.empresa?[['Empresa / obra',cfg.empresa]]:[]), ['Período',periodo], ['Quantidade de notas',String(lista.length)], ['Emitido em',new Date(ped.fechado||Date.now()).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})]];
+  info.forEach(([k,v])=>{ doc.setFont('helvetica','bold'); doc.text(k+':',M,y); doc.setFont('helvetica','normal'); doc.text(String(v),M+42,y); y+=5.5; });
   doc.autoTable({
     startY:y+3, margin:{left:M,right:M},
     head:[['Nº','Data','Descrição','Valor (R$)']],
@@ -517,7 +626,6 @@ async function gerarPDF(){
   y=doc.lastAutoTable.finalY+22;
   if(y>H-30){ doc.addPage(); y=M+20; }
   doc.line(W/2-40,y,W/2+40,y); doc.setFontSize(9); doc.text(cfg.resp||'Responsável',W/2,y+5,{align:'center'});
-  // anexos
   for(let i=0;i<lista.length;i++){
     const n=lista[i]; doc.addPage();
     doc.setFont('helvetica','bold'); doc.setFontSize(11);
@@ -531,41 +639,112 @@ async function gerarPDF(){
     doc.addImage(n.img,'JPEG',M+(aw-iw)/2,top,iw,ih,undefined,'FAST');
   }
   const pg=doc.getNumberOfPages();
-  for(let p=1;p<=pg;p++){ doc.setPage(p); doc.setFontSize(8); doc.setTextColor(120); doc.text(`${meta.nome} — página ${p} de ${pg}`,W/2,H-7,{align:'center'}); doc.setTextColor(0); }
-  const nome=`Relatorio_${slug(meta.nome)}.pdf`;
+  for(let p=1;p<=pg;p++){ doc.setPage(p); doc.setFontSize(8); doc.setTextColor(120); doc.text(`Pedido Nº ${fmtNum(ped.numero)}${ped.ref?' — '+ped.ref:''} — página ${p} de ${pg}`,W/2,H-7,{align:'center'}); doc.setTextColor(0); }
+  const nome=`Pedido_${fmtNum(ped.numero)}${ped.ref?'_'+slug(ped.ref):''}.pdf`;
   return {blob:doc.output('blob'), nome, total, qtd:lista.length};
 }
-$('#btnPdf').onclick=async()=>{
+const pdfCache={};
+async function pdfDoPedido(p){ if(!pdfCache[p.id]) pdfCache[p.id]=await gerarPDF(p); return pdfCache[p.id]; }
+
+/* ---- fechar pedido ---- */
+function stFechar(s){ $('#fecharStatus').textContent=s; }
+$('#btnPdf').onclick=()=>{
   if(!notas.length){ toast('Adicione ao menos uma nota.'); return; }
-  const b=$('#btnPdf'); b.disabled=true; const t=b.innerHTML; b.textContent='Gerando…';
-  try{
-    ultimoPdf=await gerarPDF();
-    const a=$('#pdfBaixar'); if(a.href) URL.revokeObjectURL(a.href);
-    a.href=URL.createObjectURL(ultimoPdf.blob); a.download=ultimoPdf.nome;
-    $('#pdfInfo').textContent=`${ultimoPdf.qtd} notas • total ${BRL.format(ultimoPdf.total)} • ${ultimoPdf.nome}`;
-    $('#pdfStatus').textContent='';
-    $('#pdfCompartilhar').classList.toggle('hidden', !(navigator.canShare && navigator.canShare({files:[new File([ultimoPdf.blob],ultimoPdf.nome,{type:'application/pdf'})]})));
-    $('#dlgPdf').showModal();
-  }catch(e){ console.error(e); toast('Erro ao gerar o PDF: '+e.message,5000); }
-  finally{ b.disabled=false; b.innerHTML=t; }
+  const total=notas.reduce((s,n)=>s+n.valor,0);
+  $('#fecharTitulo').textContent=`Fechar Pedido Nº ${fmtNum(meta.numero)}`;
+  $('#fecharInfo').innerHTML=''; const li=[`${notas.length} nota${notas.length>1?'s':''}`, `Total ${BRL.format(total)}`]; if(meta.nome) li.unshift(meta.nome);
+  $('#fecharInfo').textContent=li.join(' • ');
+  const temDrive=!!cfgGet().clientId;
+  $('#btnFecharDrive').disabled=!temDrive;
+  $('#fecharHint').textContent=temDrive?'O relatório em PDF será salvo direto na pasta Notas de Consumo do seu Google Drive.':'O Google Drive ainda não está configurado (Menu ⋮ → Configurações). Você pode fechar e só baixar o PDF.';
+  stFechar(''); ocupado(false); $('#dlgFechar').showModal();
 };
-$('#pdfCompartilhar').onclick=async()=>{
-  try{ await navigator.share({files:[new File([ultimoPdf.blob],ultimoPdf.nome,{type:'application/pdf'})], title:ultimoPdf.nome}); }catch(e){}
+function ocupado(b){ ['#btnFecharDrive','#btnFecharLocal','#btnFecharCancel'].forEach(i=>$(i).disabled=b||(i==='#btnFecharDrive'&&!cfgGet().clientId)); }
+$('#btnFecharCancel').onclick=()=>$('#dlgFechar').close();
+$('#btnFecharDrive').onclick=()=>{ ocupado(true); comDrive(()=>fecharPedido(true).catch(e=>{ ocupado(false); throw e; }), s=>{ stFechar(s); if(/Erro|toque de novo/.test(s)) ocupado(false); }); };
+$('#btnFecharLocal').onclick=async()=>{ ocupado(true); try{ await fecharPedido(false); }catch(e){ console.error(e); stFechar('Erro: '+e.message); ocupado(false); } };
+async function fecharPedido(enviar){
+  const lista=ordenadas();
+  const ped={id:uid(), numero:meta.numero, ref:meta.nome||'', fechado:new Date().toISOString(), notas:lista, qtd:lista.length, total:Math.round(lista.reduce((s,n)=>s+n.valor,0)*100)/100, drive:null};
+  stFechar('Gerando o PDF…');
+  const pdf=await gerarPDF(ped); pdfCache[ped.id]=pdf;
+  if(enviar){
+    stFechar('Enviando ao Google Drive…');
+    const pasta=await drivePasta();
+    const f=await driveUpload({nome:pdf.nome, blob:pdf.blob, pasta});
+    ped.drive={id:f.id, link:f.webViewLink, nome:f.name};
+  }
+  await DB.pedPut(ped); pedidos.push(ped);
+  await DB.clear(); notas=[];
+  meta=novaMeta(Math.max(ped.numero+1, proximoNumero())); await DB.setMeta(meta);
+  render(); $('#dlgFechar').close();
+  toast(enviar?`Pedido Nº ${fmtNum(ped.numero)} salvo no Drive`:`Pedido Nº ${fmtNum(ped.numero)} fechado`);
+  if(!enviar) baixar(pdf);
+  abrirPedido(ped);
+}
+function baixar(pdf){ const a=document.createElement('a'); a.href=URL.createObjectURL(pdf.blob); a.download=pdf.nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),10000); }
+
+/* ---- detalhes do pedido ---- */
+let pedAtual=null, armadoRefazer=false;
+function stPed(s){ $('#pedStatus').textContent=s; }
+function abrirPedido(p){
+  pedAtual=p; armadoRefazer=false;
+  $('#pedTitulo').textContent=`Pedido Nº ${fmtNum(p.numero)}`;
+  $('#pedInfo').textContent=[p.ref, `${p.qtd} notas`, `Total ${BRL.format(p.total)}`, `fechado em ${new Date(p.fechado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}`].filter(Boolean).join(' • ');
+  const a=$('#pedAbrirDrive'); a.classList.toggle('hidden',!p.drive); if(p.drive) a.href=p.drive.link;
+  $('#pedEnviarDrive').classList.toggle('hidden',!!p.drive);
+  const ultimo = p.numero===Math.max(...pedidos.map(x=>x.numero));
+  $('#pedRefazer').classList.toggle('hidden',!ultimo);
+  $('#pedRefazer').textContent='Relatório errado? Excluir e refazer';
+  $('#pedExcluirHist').classList.toggle('hidden',ultimo);
+  $('#pedCompartilhar').classList.toggle('hidden',!navigator.canShare);
+  const L=$('#pedNotas'); L.innerHTML='';
+  ordenar(p.notas).forEach((n,i)=>{ const r=document.createElement('div'); r.className='pnl'; r.innerHTML='<span></span><span></span><b></b>'; r.children[0].textContent=fmtData(n.data); r.children[1].textContent=n.desc||'-'; r.children[2].textContent=BRL.format(n.valor); L.appendChild(r); });
+  stPed(''); if(!$('#dlgPedido').open) $('#dlgPedido').showModal();
+  pdfDoPedido(p).catch(()=>{});
+}
+$('#pedBaixar').onclick=async()=>{ stPed('Preparando PDF…'); try{ baixar(await pdfDoPedido(pedAtual)); stPed(''); }catch(e){ stPed('Erro: '+e.message); } };
+$('#pedCompartilhar').onclick=async()=>{
+  const pdf=pdfCache[pedAtual.id]; if(!pdf){ stPed('Preparando PDF… toque de novo em instantes.'); pdfDoPedido(pedAtual).then(()=>stPed('PDF pronto. Toque em Compartilhar.')); return; }
+  const file=new File([pdf.blob],pdf.nome,{type:'application/pdf'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file],title:pdf.nome}); }catch(e){} } else stPed('Este navegador não permite compartilhar arquivos. Use Baixar PDF.');
 };
-$('#pdfDrive').onclick=()=>comDrive(async()=>{
-  $('#pdfStatus').textContent='Enviando para o Drive…';
-  const pasta=await drivePasta();
-  const f=await driveUpload({nome:ultimoPdf.nome, blob:ultimoPdf.blob, pasta});
-  $('#pdfStatus').innerHTML=`Salvo no Drive: <a href="${f.webViewLink}" target="_blank" rel="noopener">abrir arquivo</a>`;
-}, s=>$('#pdfStatus').textContent=s);
+$('#pedEnviarDrive').onclick=()=>comDrive(async()=>{
+  const p=pedAtual; stPed('Enviando ao Google Drive…');
+  const pdf=await pdfDoPedido(p); const pasta=await drivePasta();
+  const f=await driveUpload({nome:pdf.nome, blob:pdf.blob, pasta});
+  p.drive={id:f.id, link:f.webViewLink, nome:f.name}; await DB.pedPut(p); renderPedidos(); abrirPedido(p); stPed('Salvo no Drive.');
+}, stPed);
+$('#pedRefazer').onclick=()=>{
+  const p=pedAtual;
+  if(!armadoRefazer){ armadoRefazer=true; $('#pedRefazer').textContent='Toque de novo para confirmar a exclusão';
+    stPed(`O relatório ${p.drive?'será apagado do Google Drive':'será excluído'} e as ${p.qtd} notas voltam para a lista, para você corrigir e gerar de novo.`+(notas.length?` As ${notas.length} notas já lançadas no pedido aberto serão juntadas a ele.`:'')); return; }
+  const reabrir=async()=>{
+    if(p.drive){ stPed('Apagando o relatório do Drive…');
+      try{ await gfetch(`https://www.googleapis.com/drive/v3/files/${p.drive.id}`,{method:'DELETE'}); }catch(e){ if(e.status!==404) throw e; } }
+    for(const n of p.notas){ await DB.put(n); }
+    notas=[...notas.filter(n=>!p.notas.some(x=>x.id===n.id)), ...p.notas];
+    await DB.pedDel(p.id); pedidos=pedidos.filter(x=>x.id!==p.id); delete pdfCache[p.id];
+    meta.numero=p.numero; meta.nome=meta.nome||p.ref||''; await DB.setMeta(meta);
+    render(); $('#dlgPedido').close(); trocarAba('lanc'); toast(`Pedido Nº ${fmtNum(p.numero)} reaberto. Corrija e gere de novo.`,4000);
+  };
+  if(p.drive) comDrive(reabrir, stPed); else reabrir().catch(e=>stPed('Erro: '+e.message));
+};
+$('#pedExcluirHist').onclick=async()=>{
+  const p=pedAtual;
+  if(!confirm(`Remover o Pedido Nº ${fmtNum(p.numero)} do histórico deste aparelho?${p.drive?'\n\nO PDF continua salvo no Google Drive.':''}`)) return;
+  await DB.pedDel(p.id); pedidos=pedidos.filter(x=>x.id!==p.id); delete pdfCache[p.id]; renderPedidos(); $('#dlgPedido').close(); toast('Pedido removido do histórico');
+};
 
 /* ================= backup local ================= */
-function montarBackup(){ return {app:'notas-consumo',versao:1,meta,notas}; }
+function montarBackup(){ return {app:'notas-consumo',versao:2,meta,notas,pedidos}; }
 async function importarBackup(obj){
   if(!obj||!Array.isArray(obj.notas)||!obj.meta) throw new Error('Arquivo inválido');
-  if(notas.length && !confirm(`Substituir a apuração atual ("${meta.nome}", ${notas.length} notas) por "${obj.meta.nome}" (${obj.notas.length} notas)?`)) return false;
+  const np=Array.isArray(obj.pedidos)?obj.pedidos.length:0;
+  if((notas.length||pedidos.length) && !confirm(`Substituir os dados deste aparelho pelo backup?\n\nBackup: ${obj.notas.length} notas em aberto e ${np} pedidos fechados.`)) return false;
   await DB.clear(); for(const n of obj.notas) await DB.put(n);
-  meta=obj.meta; await DB.setMeta(meta); notas=await DB.all(); render(); return true;
+  if(Array.isArray(obj.pedidos)){ for(const p of pedidos) await DB.pedDel(p.id); for(const p of obj.pedidos) await DB.pedPut(p); pedidos=obj.pedidos; }
+  meta=obj.meta; if(!meta.numero) meta.numero=proximoNumero(); await DB.setMeta(meta); notas=await DB.all(); render(); return true;
 }
 
 /* ================= menu / config ================= */
@@ -573,19 +752,27 @@ $('#btnMenu').onclick=()=>$('#dlgMenu').showModal();
 $('#dlgMenu').addEventListener('click',async e=>{
   const act=e.target.dataset&&e.target.dataset.act; if(!act) return; $('#dlgMenu').close();
   if(act==='config') abrirConfig();
-  if(act==='exportar'){ const blob=new Blob([JSON.stringify(montarBackup())],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Apuracao_${slug(meta.nome)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000); }
+  if(act==='drive'){ $('#driveLista').innerHTML=''; $('#driveStatus').textContent=''; iniciarGoogle(); $('#dlgDrive').showModal(); }
+  if(act==='exportar'){ const blob=new Blob([JSON.stringify(montarBackup())],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Backup_NotasConsumo_${hojeISO()}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000); }
   if(act==='importar') $('#inBackup').click();
-  if(act==='nova'){
-    if(notas.length && !confirm(`Iniciar nova apuração? As ${notas.length} notas atuais serão apagadas deste aparelho.\n\nGere o relatório e/ou salve no Drive antes.`)) return;
-    await DB.clear(); notas=[]; meta=novaMeta(); await DB.setMeta(meta); render(); toast('Nova apuração iniciada');
+  if(act==='limpar'){
+    if(!notas.length){ toast('Não há notas em aberto.'); return; }
+    if(!confirm(`Apagar as ${notas.length} notas do Pedido Nº ${fmtNum(meta.numero)} em aberto?\n\nIsso não pode ser desfeito.`)) return;
+    await DB.clear(); notas=[]; render(); toast('Notas em aberto apagadas');
   }
 });
 $('#inBackup').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; try{ if(await importarBackup(JSON.parse(await f.text()))) toast('Backup carregado'); }catch(err){ toast('Não foi possível abrir: '+err.message,5000); } };
-function abrirConfig(){ const c=cfgGet(); $('#cResp').value=c.resp||''; $('#cEmpresa').value=c.empresa||''; $('#cClient').value=c.clientId||''; $('#dlgConfig').showModal(); }
-$('#formConfig').addEventListener('submit',()=>{
+function abrirConfig(){ const c=cfgGet(); $('#cResp').value=c.resp||''; $('#cEmpresa').value=c.empresa||''; $('#cClient').value=c.clientId||''; $('#cNum').value=meta.numero; $('#dlgConfig').showModal(); }
+$('#formConfig').addEventListener('submit',async()=>{
   const c=cfgGet(); const antes=c.clientId;
   c.resp=$('#cResp').value.trim(); c.empresa=$('#cEmpresa').value.trim(); c.clientId=$('#cClient').value.trim();
-  cfgSet(c); if(c.clientId!==antes){ tokenClient=null; token=null; iniciarGoogle(); } toast('Configurações salvas');
+  cfgSet(c); if(c.clientId!==antes){ tokenClient=null; token=null; iniciarGoogle(); }
+  const n=parseInt($('#cNum').value,10);
+  if(n>0 && n!==meta.numero){
+    if(pedidos.some(p=>p.numero===n)) toast(`O Pedido Nº ${fmtNum(n)} já existe no histórico. Número mantido.`,4500);
+    else { meta.numero=n; await DB.setMeta(meta); render(); }
+  }
+  toast('Configurações salvas');
 });
 
 /* ================= Google Drive ================= */
@@ -636,31 +823,29 @@ async function driveUpload({nome,blob,pasta,fileId}){
   }
   return (await gfetch(base+qs,{method:'POST',body:fd})).json();
 }
-$('#btnDrive').onclick=()=>{ $('#driveLista').innerHTML=''; $('#driveStatus').textContent=''; iniciarGoogle(); $('#dlgDrive').showModal(); };
 $('#btnDriveSalvar').onclick=()=>comDrive(async()=>{
   $('#driveStatus').textContent='Salvando no Drive…';
   const pasta=await drivePasta();
   const blob=new Blob([JSON.stringify(montarBackup())],{type:'application/json'});
-  const f=await driveUpload({nome:`Apuracao - ${meta.nome}.json`,blob,pasta,fileId:meta.driveFileId});
-  meta.driveFileId=f.id; await DB.setMeta(meta);
+  const c=cfgGet(); const f=await driveUpload({nome:'Backup - Notas de Consumo.json',blob,pasta,fileId:c.backupId});
+  c.backupId=f.id; cfgSet(c);
   $('#driveStatus').textContent=`Salvo: ${f.name} (${new Date().toLocaleTimeString('pt-BR')})`;
 });
 $('#btnDriveAbrir').onclick=()=>comDrive(async()=>{
-  $('#driveStatus').textContent='Buscando apurações…';
+  $('#driveStatus').textContent='Buscando backups…';
   const pasta=await drivePasta();
   const q=encodeURIComponent(`'${pasta}' in parents and mimeType='application/json' and trashed=false`);
   const j=await (await gfetch(`https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime desc&fields=files(id,name,modifiedTime)`)).json();
   const L=$('#driveLista'); L.innerHTML='';
-  if(!j.files.length){ $('#driveStatus').textContent='Nenhuma apuração salva no Drive ainda.'; return; }
-  $('#driveStatus').textContent='Toque na apuração para abrir:';
+  if(!j.files.length){ $('#driveStatus').textContent='Nenhum backup salvo no Drive ainda.'; return; }
+  $('#driveStatus').textContent='Toque no backup para abrir:';
   j.files.forEach(f=>{
     const b=document.createElement('button'); b.className='btn'; b.style.justifyContent='space-between';
-    b.innerHTML='<span></span><small></small>'; b.firstChild.textContent=f.name.replace(/^Apuracao - |\.json$/g,''); b.lastChild.textContent=new Date(f.modifiedTime).toLocaleDateString('pt-BR');
+    b.innerHTML='<span></span><small></small>'; b.firstChild.textContent=f.name.replace(/\.json$/,''); b.lastChild.textContent=new Date(f.modifiedTime).toLocaleDateString('pt-BR');
     b.onclick=()=>comDrive(async()=>{
       $('#driveStatus').textContent='Baixando…';
       const obj=await (await gfetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`)).json();
-      obj.meta.driveFileId=f.id;
-      if(await importarBackup(obj)){ $('#dlgDrive').close(); toast('Apuração carregada do Drive'); } else $('#driveStatus').textContent='';
+            if(await importarBackup(obj)){ $('#dlgDrive').close(); toast('Backup carregado do Drive'); } else $('#driveStatus').textContent='';
     });
     L.appendChild(b);
   });

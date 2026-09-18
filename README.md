@@ -59,11 +59,11 @@ O app precisa de um **ID do cliente** do Google para pedir permissão de salvar 
    - Deixe **URIs de redirecionamento autorizados** em branco → **Criar**.
    - Vai abrir uma janela com o **ID do cliente** (termina em `.apps.googleusercontent.com`). Clique no ícone de copiar.
 7. **No app:** menu **⋮** → **Configurações** → cole em **Google Client ID** → **Salvar**.
-8. Toque em **Google Drive** → **Salvar esta apuração no Drive**. Na primeira vez:
+8. Feche um pedido com **Gerar relatório e salvar no Google Drive** (ou use **⋮ → Backup no Google Drive**). Na primeira vez:
    - Escolha sua conta Google.
    - Vai aparecer **"O Google não verificou este app"**: clique em **Continuar** (o app é seu).
    - Autorize o acesso → **Continuar**.
-   - Confira no seu Drive: vai surgir a pasta **Notas de Consumo** com o arquivo da apuração.
+   - Confira no seu Drive: vai surgir a pasta **Notas de Consumo** com o PDF do pedido.
 
 > **Erro `origin_mismatch` ou "Acesso bloqueado":** o endereço do item 6 está diferente do endereço do app. Confira o `https://` e o nome de usuário. Depois de corrigir, a mudança pode levar alguns minutos para valer.
 >
@@ -75,11 +75,13 @@ O app precisa de um **ID do cliente** do Google para pedir permissão de salvar 
 
 1. **Fotografar nota** (ou **Galeria**, que aceita várias fotos de uma vez).
 2. O app lê a nota e preenche os campos. Os **campos em amarelo** foram lidos automaticamente: confira e corrija se precisar. Se a foto ficou de lado, toque em **Girar**.
-3. **Salvar.** A nota entra na lista e o total é atualizado. Toque em uma nota para editar ou excluir.
-4. Toque no nome da apuração (topo) para renomear, ex.: `Despesas Setembro/2026 – Obra X`.
-5. No fim do período: **Gerar relatório** → *Baixar PDF*, *Compartilhar* (WhatsApp, e-mail) ou *Salvar PDF no Google Drive*.
-6. Depois de enviar o relatório: menu **⋮** → **Iniciar nova apuração**.
+3. **Salvar.** A nota entra na lista, **agrupada por data** (da mais antiga para a mais recente). Toque numa nota para editar; a **lixeira** exclui.
+4. As notas lançadas formam o **Pedido Nº xxxx em aberto** (topo). Se quiser, preencha a **Referência** (ex.: `Obra X / Setembro`).
+5. No fim: **Fechar Pedido e gerar relatório** → **Gerar relatório e salvar no Google Drive**. O PDF vai direto para a pasta **Notas de Consumo** do Drive, o pedido vai para a aba **Pedidos** e um novo pedido (próximo número) é aberto.
+6. Aba **Pedidos**: lista dos últimos pedidos fechados. Toque num pedido para abrir no Drive, baixar ou compartilhar o PDF.
+7. **Relatório saiu errado?** Abra o último pedido → **Relatório errado? Excluir e refazer** (toque duas vezes para confirmar). O PDF é apagado do Drive e as notas voltam para a lista com o mesmo número de pedido. Corrija e gere de novo.
+8. Para mudar a numeração (ex.: começar no pedido 15): **⋮ → Configurações → Número do pedido em aberto**.
 
 **Dicas para a leitura sair certa:** nota esticada sobre fundo escuro, boa luz, sem sombra, foto de frente e enquadrando a nota inteira. Cupom muito longo: tire a foto da parte de baixo (onde estão total e data) e confira a descrição.
 
-**Cuidado:** os dados ficam no navegador. Se você limpar os dados do navegador ou trocar de celular, perde o que não foi salvo. Salve no Drive (ou em *⋮ → Salvar backup no aparelho*) de tempos em tempos.
+**Cuidado:** os dados ficam no navegador. Se você limpar os dados do navegador ou trocar de celular, perde o que não foi salvo. Faça de tempos em tempos um backup em *⋮ → Backup no Google Drive* (ou *Salvar backup no aparelho*).
