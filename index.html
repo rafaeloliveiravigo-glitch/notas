@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Notas de Consumo</title>
+<meta name="theme-color" content="#0f5132">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --bg:#f4f6f5; --card:#fff; --text:#1c2421; --muted:#66736d; --line:#dde3e0;
+  --pri:#0f5132; --pri2:#198754; --priText:#fff; --warn:#fff4d6; --warnLine:#e6c35c; --danger:#b42318;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#121714; --card:#1b221e; --text:#e7ece9; --muted:#9aa7a0; --line:#2c3631;
+    --pri:#2f9e6a; --pri2:#3dbb80; --warn:#3a3218; --warnLine:#8a7330; --danger:#f0776b; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+header{background:var(--pri);color:var(--priText);padding:calc(14px + env(safe-area-inset-top)) 0 18px}
+header .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:15px;font-weight:600;margin:0;opacity:.85;letter-spacing:.02em}
+#nomeApuracao{width:100%;margin-top:6px;background:transparent;border:0;border-bottom:1px dashed rgba(255,255,255,.4);color:#fff;font-size:22px;font-weight:700;padding:2px 0}
+#nomeApuracao:focus{outline:none;border-bottom-color:#fff}
+.stats{display:flex;gap:24px;margin-top:12px}
+.stats div span{display:block;font-size:12px;opacity:.8}
+.stats div b{font-size:22px}
+.iconbtn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:10px;width:40px;height:40px;display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:22px;height:22px}
+.capture{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin:16px 0}
+.btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:12px 14px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn svg{width:20px;height:20px;flex:none}
+.btn.pri{background:var(--pri2);border-color:var(--pri2);color:#fff}
+.btn.big{padding:16px;font-size:16px}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.5}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px;cursor:pointer}
+.item img{width:54px;height:54px;object-fit:cover;border-radius:8px;flex:none;background:var(--line)}
+.item .info{flex:1;min-width:0}
+.item .desc{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .date{font-size:13px;color:var(--muted)}
+.item .val{font-weight:700;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:40px 16px;border:2px dashed var(--line);border-radius:var(--radius)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+.bar .wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+dialog{border:0;border-radius:18px;padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);background:var(--card);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dlg{padding:18px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0;font-size:18px}
+.dlg .row{display:flex;gap:10px;flex-wrap:wrap}
+.dlg .row>*{flex:1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+label.f input,label.f textarea{font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+label.f input.chk{background:var(--warn);border-color:var(--warnLine)}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.prev{position:relative;background:var(--bg);border-radius:12px;overflow:hidden;text-align:center}
+.prev img{max-width:100%;max-height:38vh;display:block;margin:0 auto}
+.prev .rot{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+.progress{height:6px;background:var(--line);border-radius:6px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--pri2);transition:width .2s}
+.status{font-size:13px;color:var(--muted);min-height:18px}
+details{font-size:13px;color:var(--muted)}
+details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(--bg);padding:8px;border-radius:8px;font-size:12px}
+.actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.menu{display:flex;flex-direction:column;gap:8px}
+.menu .btn{justify-content:flex-start}
+.sep{height:1px;background:var(--line);margin:4px 0}
+.drivelist{display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:99}
+.toast.show{opacity:1}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1>NOTAS DE CONSUMO</h1>
+      <button class="iconbtn" id="btnMenu" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+    </div>
+    <input id="nomeApuracao" aria-label="Nome da apuração" autocomplete="off">
+    <div class="stats">
+      <div><span>Notas</span><b id="stQtd">0</b></div>
+      <div><span>Total</span><b id="stTotal">R$ 0,00</b></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="capture">
+    <label class="btn pri big">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      Fotografar nota
+      <input type="file" accept="image/*" capture="environment" id="inCamera" hidden>
+    </label>
+    <label class="btn big">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>
+      Galeria
+      <input type="file" accept="image/*" multiple id="inGaleria" hidden>
+    </label>
+  </div>
+  <div class="list" id="lista"></div>
+</main>
+
+<div class="bar">
+  <div class="wrap">
+    <button class="btn" id="btnDrive">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/><path d="M12 11v6m-3-3 3 3 3-3"/></svg>
+      Google Drive
+    </button>
+    <button class="btn pri" id="btnPdf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>
+      Gerar relatório
+    </button>
+  </div>
+</div>
+
+<!-- Editor da nota -->
+<dialog id="dlgNota">
+  <form class="dlg" method="dialog" id="formNota">
+    <h2 id="notaTitulo">Nova nota</h2>
+    <div class="prev">
+      <img id="notaImg" alt="Foto da nota">
+      <button type="button" class="rot" id="btnGirar">Girar ↻</button>
+    </div>
+    <div class="progress" id="ocrBar"><i></i></div>
+    <div class="status" id="ocrStatus"></div>
+    <div class="row">
+      <label class="f">Data<input type="date" id="fData" required></label>
+      <label class="f">Valor total (R$)<input id="fValor" inputmode="decimal" placeholder="0,00" required></label>
+    </div>
+    <label class="f">Descrição<input id="fDesc" placeholder="Ex.: Posto Ipiranga – abastecimento" required></label>
+    <p class="hint">Campos em amarelo foram lidos automaticamente: confira antes de salvar.</p>
+    <details><summary>Ver texto lido da nota</summary><pre id="ocrTexto"></pre></details>
+    <div class="actions">
+      <button type="button" class="btn danger hidden" id="btnExcluir">Excluir</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn" id="btnCancelar">Cancelar</button>
+      <button type="submit" class="btn pri" id="btnSalvar">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Menu -->
+<dialog id="dlgMenu">
+  <div class="dlg">
+    <h2>Menu</h2>
+    <div class="menu">
+      <button class="btn" data-act="config">Configurações</button>
+      <div class="sep"></div>
+      <button class="btn" data-act="exportar">Salvar backup no aparelho (.json)</button>
+      <button class="btn" data-act="importar">Abrir backup do aparelho (.json)</button>
+      <div class="sep"></div>
+      <button class="btn danger" data-act="nova">Iniciar nova apuração</button>
+    </div>
+    <div class="actions"><button class="btn" data-close>Fechar</button></div>
+  </div>
+</dialog>
+<input type="file" accept=".json,application/json" id="inBackup" hidden>
+
+<!-- Configurações -->
+<dialog id="dlgConfig">
+  <form class="dlg" method="dialog" id="formConfig">
+    <h2>Configurações</h2>
+    <label class="f">Nome do responsável (sai no relatório)<input id="cResp"></label>
+    <label class="f">Empresa / obra / centro de custo (opcional)<input id="cEmpresa"></label>
+    <div class="sep"></div>
+    <label class="f">Google Client ID (para usar o Drive)<input id="cClient" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off"></label>
+    <p class="hint">Veja no guia como gerar esse código. Sem ele, o app funciona normalmente, só sem o Drive.</p>
+    <div class="actions">
+      <button type="button" class="btn" data-close>Cancelar</button>
+      <button type="submit" class="btn pri">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Drive -->
+<dialog id="dlgDrive">
+  <div class="dlg">
+    <h2>Google Drive</h2>
+    <p class="hint" id="driveInfo">Os arquivos ficam na pasta <b>Notas de Consumo</b> do seu Drive.</p>
+    <div class="menu">
+      <button class="btn" id="btnDriveSalvar">Salvar esta apuração no Drive</button>
+      <button class="btn" id="btnDriveAbrir">Abrir uma apuração do Drive</button>
+    </div>
+    <div class="drivelist" id="driveLista"></div>
+    <div class="status" id="driveStatus"></div>
+    <div class="actions"><button class="btn" data-close>Fechar</button></div>
+  </div>
+</dialog>
+
+<!-- Relatório -->
+<dialog id="dlgPdf">
+  <div class="dlg">
+    <h2>Relatório pronto</h2>
+    <p class="hint" id="pdfInfo"></p>
+    <div class="menu">
+      <a class="btn pri" id="pdfBaixar" download>Baixar PDF</a>
+      <button class="btn" id="pdfCompartilhar">Compartilhar (WhatsApp, e-mail…)</button>
+      <button class="btn" id="pdfDrive">Salvar PDF no Google Drive</button>
+    </div>
+    <div class="status" id="pdfStatus"></div>
+    <div class="actions"><button class="btn" data-close>Fechar</button></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+<script>
+'use strict';
+/* ================= utilidades ================= */
+const $ = s => document.querySelector(s);
+const BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const fmtData = iso => iso ? iso.split('-').reverse().join('/') : '';
+const hojeISO = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const slug = s => (s||'apuracao').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_');
+function parseValorBR(s){
+  if(typeof s==='number') return s;
+  s=String(s||'').replace(/[R$\s]/g,'');
+  if(!s) return NaN;
+  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+  return Math.round(parseFloat(s)*100)/100;
+}
+const fmtValorInput = v => isFinite(v) ? v.toFixed(2).replace('.',',') : '';
+let toastT;
+function toast(msg,ms=2800){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),ms); }
+const cfgGet = () => { try{ return JSON.parse(localStorage.getItem('nc_cfg')||'{}'); }catch(e){ return {}; } };
+const cfgSet = c => { try{ localStorage.setItem('nc_cfg',JSON.stringify(c)); }catch(e){} };
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
+
+/* ================= banco local (IndexedDB) ================= */
+const DB = {
+  db:null,
+  open(){ return new Promise((res,rej)=>{ const r=indexedDB.open('notasConsumo',1);
+    r.onupgradeneeded=()=>{ const d=r.result; d.createObjectStore('meta'); d.createObjectStore('notas',{keyPath:'id'}); };
+    r.onsuccess=()=>{ this.db=r.result; res(); }; r.onerror=()=>rej(r.error); }); },
+  tx(store,mode,fn){ return new Promise((res,rej)=>{ const t=this.db.transaction(store,mode); const s=t.objectStore(store); const out=fn(s); t.oncomplete=()=>res(out instanceof IDBRequest?out.result:out); t.onerror=()=>rej(t.error); }); },
+  getMeta(){ return this.tx('meta','readonly',s=>s.get('atual')); },
+  setMeta(m){ return this.tx('meta','readwrite',s=>s.put(m,'atual')); },
+  all(){ return this.tx('notas','readonly',s=>s.getAll()); },
+  put(n){ return this.tx('notas','readwrite',s=>s.put(n)); },
+  del(id){ return this.tx('notas','readwrite',s=>s.delete(id)); },
+  clear(){ return this.tx('notas','readwrite',s=>s.clear()); },
+};
+
+/* ================= estado ================= */
+let meta = null, notas = [];
+function novaMeta(){ const d=new Date(); const m=d.toLocaleDateString('pt-BR',{month:'long'}); return {id:uid(), nome:`Despesas ${m[0].toUpperCase()+m.slice(1)}/${d.getFullYear()}`, criado:new Date().toISOString(), driveFileId:null}; }
+async function carregar(){
+  await DB.open();
+  meta = await DB.getMeta();
+  if(!meta){ meta=novaMeta(); await DB.setMeta(meta); }
+  notas = await DB.all();
+  render();
+}
+function ordenadas(){ return [...notas].sort((a,b)=> (a.data||'').localeCompare(b.data||'') || a.criado.localeCompare(b.criado)); }
+function render(){
+  $('#nomeApuracao').value = meta.nome;
+  const total = notas.reduce((s,n)=>s+(n.valor||0),0);
+  $('#stQtd').textContent = notas.length;
+  $('#stTotal').textContent = BRL.format(total);
+  const L=$('#lista'); L.innerHTML='';
+  if(!notas.length){ L.innerHTML='<div class="empty">Nenhuma nota ainda.<br>Toque em <b>Fotografar nota</b> para começar.</div>'; return; }
+  ordenadas().reverse().forEach(n=>{
+    const el=document.createElement('div'); el.className='item';
+    el.innerHTML=`<img alt=""><div class="info"><div class="desc"></div><div class="date"></div></div><div class="val"></div>`;
+    el.querySelector('img').src=n.img;
+    el.querySelector('.desc').textContent=n.desc||'(sem descrição)';
+    el.querySelector('.date').textContent=fmtData(n.data);
+    el.querySelector('.val').textContent=BRL.format(n.valor||0);
+    el.onclick=()=>abrirEditor(n);
+    L.appendChild(el);
+  });
+}
+$('#nomeApuracao').addEventListener('change',async e=>{ meta.nome=e.target.value.trim()||meta.nome; await DB.setMeta(meta); render(); });
+
+/* ================= imagem ================= */
+function carregarImagem(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; }); }
+function desenhar(img,maxLado,rot=0){
+  const w0=img.naturalWidth||img.width, h0=img.naturalHeight||img.height;
+  const k=Math.min(1,maxLado/Math.max(w0,h0)); const w=Math.round(w0*k), h=Math.round(h0*k);
+  const c=document.createElement('canvas'); const r90=rot%180!==0;
+  c.width=r90?h:w; c.height=r90?w:h;
+  const g=c.getContext('2d'); g.translate(c.width/2,c.height/2); g.rotate(rot*Math.PI/180); g.drawImage(img,-w/2,-h/2,w,h);
+  return c;
+}
+async function arquivoParaDataURL(file){
+  const url=URL.createObjectURL(file);
+  try{ const img=await carregarImagem(url); return desenhar(img,1600).toDataURL('image/jpeg',0.82); }
+  finally{ URL.revokeObjectURL(url); }
+}
+async function prepararOCR(dataURL){
+  const img=await carregarImagem(dataURL); const c=desenhar(img,2400);
+  if(Math.max(c.width,c.height)<2000){ const k=2000/Math.max(c.width,c.height); const c2=document.createElement('canvas'); c2.width=c.width*k; c2.height=c.height*k; const g2=c2.getContext('2d'); g2.imageSmoothingQuality='high'; g2.drawImage(c,0,0,c2.width,c2.height); return tons(c2); }
+  return tons(c);
+}
+function tons(c){ // escala de cinza + contraste
+  const g=c.getContext('2d'); const d=g.getImageData(0,0,c.width,c.height); const p=d.data;
+  let min=255,max=0; const gray=new Uint8ClampedArray(p.length/4);
+  for(let i=0,j=0;i<p.length;i+=4,j++){ const v=0.299*p[i]+0.587*p[i+1]+0.114*p[i+2]; gray[j]=v; }
+  const hist=new Uint32Array(256); gray.forEach(v=>hist[v]++); let acc=0,n=gray.length;
+  for(let v=0;v<256;v++){ acc+=hist[v]; if(acc>n*0.02){min=v;break;} } acc=0;
+  for(let v=255;v>=0;v--){ acc+=hist[v]; if(acc>n*0.02){max=v;break;} }
+  const k=255/Math.max(1,max-min);
+  for(let i=0,j=0;i<p.length;i+=4,j++){ const v=Math.max(0,Math.min(255,(gray[j]-min)*k)); p[i]=p[i+1]=p[i+2]=v; }
+  g.putImageData(d,0,0); return c;
+}
+
+/* ================= leitura (OCR) ================= */
+let workerP=null;
+function getWorker(onProg){
+  if(!workerP){
+    workerP = Tesseract.createWorker('por',1,{ logger:m=>{ if(window._ocrProg) window._ocrProg(m); } })
+      .then(async w=>{ await w.setParameters({preserve_interword_spaces:'1'}); return w; })
+      .catch(e=>{ workerP=null; throw e; });
+  }
+  return workerP;
+}
+async function lerNota(dataURL,onProg){
+  window._ocrProg=m=>{
+    if(m.status==='recognizing text') onProg(40+m.progress*60,'Lendo a nota…');
+    else if(/load|initializ/i.test(m.status)) onProg(Math.min(38,(m.progress||0)*38),'Preparando leitor (na 1ª vez demora um pouco)…');
+  };
+  const w=await getWorker();
+  const c=await prepararOCR(dataURL);
+  const r=await w.recognize(c);
+  return r.data.text||'';
+}
+const MONEY=/(?<![\d.,])(\d{1,3}(?:\.\d{3})+|\d{1,6})\s?[,.]\s?(\d{2})(?![\d])/g;
+function valoresDaLinha(l){ const out=[]; let m; MONEY.lastIndex=0; while((m=MONEY.exec(l))){ out.push(parseFloat(m[1].replace(/\./g,'')+'.'+m[2])); } return out; }
+function extrairDados(texto){
+  const norm=texto.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+  const linhas=norm.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const orig=texto.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const res={valor:null,data:null,desc:'',ok:{valor:false,data:false,desc:false}};
+  // ---- valor total
+  const excl=/TRIBUT|IMPOST|APROX|TROCO|DESCONTO|DESC\.|ACRESC|QTD|QUANT|LEI\s*12|ITENS|ITEM|FEDERAL|ESTADUAL|MUNICIPAL|IBPT/;
+  const chaves=[/VALOR\s*A\s*PAGAR/, /TOTAL\s*A\s*PAGAR/, /VALOR\s*TOTAL/, /TOTAL\s*GERAL/, /TOTAL\s*R\s?\$/, /(^|[^B])TOTAL/, /VALOR\s*PAGO/, /(CARTAO|CREDITO|DEBITO|DINHEIRO|PIX)/, /SUBTOTAL/];
+  for(const ch of chaves){
+    const cand=[];
+    linhas.forEach((l,i)=>{ if(ch.test(l) && !excl.test(l)){ let v=valoresDaLinha(l); if(!v.length && linhas[i+1] && !excl.test(linhas[i+1])) v=valoresDaLinha(linhas[i+1]); if(v.length) cand.push(v[v.length-1]); } });
+    const bons=cand.filter(v=>v>0 && v<100000);
+    if(bons.length){ res.valor=Math.max(...bons); res.ok.valor=true; break; }
+  }
+  if(res.valor==null){
+    const todos=[]; linhas.forEach(l=>{ if(!excl.test(l) && !/\d{2}[\/.\-]\d{2}[\/.\-]\d{2,4}/.test(l)) todos.push(...valoresDaLinha(l)); });
+    const b=todos.filter(v=>v>0&&v<100000); if(b.length) res.valor=Math.max(...b);
+  }
+  // ---- data
+  const RD=/(?<!\d)(\d{2})\s?[\/.\-]\s?(\d{2})\s?[\/.\-]\s?(\d{4}|\d{2})(?!\d)/g;
+  const lim=new Date(); lim.setDate(lim.getDate()+1);
+  const datas=[];
+  linhas.forEach(l=>{ let m; RD.lastIndex=0; while((m=RD.exec(l))){ let d=+m[1],mo=+m[2],y=+m[3]; if(y<100) y+=2000;
+    if(d>=1&&d<=31&&mo>=1&&mo<=12&&y>=2000){ const dt=new Date(y,mo-1,d); if(dt<=lim && dt.getDate()===d) datas.push({iso:`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`, pri:/EMISS|DATA/.test(l)?0:1}); } } });
+  if(datas.length){ datas.sort((a,b)=>a.pri-b.pri); res.data=datas[0].iso; res.ok.data=true; }
+  // ---- descrição (nome do estabelecimento)
+  const lixo=/CNPJ|CPF|\bI\.?E\.?\b|INSCR|\bRUA\b|\bR\.|\bAV\b|AV\.|AVENIDA|ROD\.|RODOVIA|ESTRADA|CEP|FONE|TEL|DOCUMENTO|CUPOM|NFC|NF-?E|EXTRATO|\bSAT\b|DANFE|CONSUMIDOR|ELETRON|CHAVE|PROTOCOLO|SERIE|BAIRRO|CENTRO\b|^\W*$/;
+  for(let i=0;i<Math.min(8,linhas.length);i++){
+    const l=linhas[i]; const letras=(l.match(/[A-Z]/g)||[]).length;
+    if(lixo.test(l) || letras<4 || letras/l.replace(/\s/g,'').length<0.6) continue;
+    res.desc=orig[i].replace(/[^\p{L}\p{N}&.\-\/ ]/gu,'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|\s)\p{L}/gu,s=>s.toUpperCase());
+    res.ok.desc=true; break;
+  }
+  return res;
+}
+
+/* ================= editor ================= */
+let edit=null; const fila=[];
+function marcar(id,auto){ $(id).classList.toggle('chk',!!auto); }
+['#fData','#fValor','#fDesc'].forEach(id=>$(id).addEventListener('input',()=>marcar(id,false)));
+function setProg(p,msg){ $('#ocrBar i').style.width=p+'%'; $('#ocrStatus').textContent=msg||''; }
+function abrirEditor(n){
+  edit={...n, existente:true};
+  $('#notaTitulo').textContent='Editar nota';
+  $('#notaImg').src=n.img; $('#fData').value=n.data||''; $('#fValor').value=fmtValorInput(n.valor); $('#fDesc').value=n.desc||'';
+  $('#ocrTexto').textContent=n.texto||''; ['#fData','#fValor','#fDesc'].forEach(i=>marcar(i,false));
+  $('#btnExcluir').classList.remove('hidden'); $('#btnSalvar').disabled=false; setProg(0,'');
+  $('#dlgNota').showModal();
+}
+async function processarArquivo(file){
+  edit={id:uid(), criado:new Date().toISOString(), existente:false, rot:0};
+  $('#notaTitulo').textContent='Nova nota'+(fila.length?` (faltam ${fila.length})`:'');
+  $('#btnExcluir').classList.add('hidden');
+  $('#fData').value=''; $('#fValor').value=''; $('#fDesc').value=''; $('#ocrTexto').textContent='';
+  ['#fData','#fValor','#fDesc'].forEach(i=>marcar(i,false));
+  $('#notaImg').removeAttribute('src'); setProg(2,'Carregando foto…');
+  if(!$('#dlgNota').open) $('#dlgNota').showModal();
+  try{
+    edit.img=await arquivoParaDataURL(file); $('#notaImg').src=edit.img;
+    await rodarOCR();
+  }catch(e){ console.error(e); setProg(0,'Não foi possível ler a foto. Preencha manualmente.'); }
+}
+async function rodarOCR(){
+  const alvo=edit; $('#btnSalvar').disabled=false;
+  try{
+    setProg(3,'Preparando leitor…');
+    const txt=await lerNota(alvo.img,(p,m)=>{ if(edit===alvo) setProg(p,m); });
+    if(edit!==alvo) return;
+    alvo.texto=txt; $('#ocrTexto').textContent=txt;
+    const r=extrairDados(txt);
+    if(!$('#fData').value||$('#fData').classList.contains('chk')){ $('#fData').value=r.data||hojeISO(); marcar('#fData',true); }
+    if(!$('#fValor').value||$('#fValor').classList.contains('chk')){ $('#fValor').value=r.valor!=null?fmtValorInput(r.valor):''; marcar('#fValor',r.valor!=null); }
+    if(!$('#fDesc').value||$('#fDesc').classList.contains('chk')){ $('#fDesc').value=r.desc; marcar('#fDesc',!!r.desc); }
+    const falt=[]; if(!r.ok.valor) falt.push('valor'); if(!r.ok.data) falt.push('data'); if(!r.ok.desc) falt.push('descrição');
+    setProg(100, falt.length?`Leitura concluída. Não encontrei com segurança: ${falt.join(', ')}.`:'Leitura concluída. Confira os campos.');
+  }catch(e){ console.error(e); if(edit===alvo){ setProg(0,'Leitor indisponível (sem internet?). Preencha manualmente.'); if(!$('#fData').value) $('#fData').value=hojeISO(); } }
+}
+$('#btnGirar').onclick=async()=>{
+  if(!edit||!edit.img) return;
+  const img=await carregarImagem(edit.img); edit.img=desenhar(img,1600,90).toDataURL('image/jpeg',0.85); $('#notaImg').src=edit.img;
+  rodarOCR();
+};
+async function proxima(){ if(fila.length) processarArquivo(fila.shift()); else { $('#dlgNota').close(); edit=null; } }
+$('#formNota').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const valor=parseValorBR($('#fValor').value);
+  if(!isFinite(valor)||valor<=0){ toast('Informe o valor total.'); $('#fValor').focus(); return; }
+  if(!$('#fData').value){ toast('Informe a data.'); return; }
+  if(!edit.img){ toast('Aguarde a foto carregar.'); return; }
+  const n={id:edit.id, criado:edit.criado, img:edit.img, texto:edit.texto||'', data:$('#fData').value, valor, desc:$('#fDesc').value.trim()};
+  await DB.put(n); const i=notas.findIndex(x=>x.id===n.id); if(i>=0) notas[i]=n; else notas.push(n);
+  render(); toast('Nota salva'); proxima();
+});
+$('#btnCancelar').onclick=()=>{ fila.length=0; edit=null; $('#dlgNota').close(); };
+$('#dlgNota').addEventListener('cancel',()=>{ fila.length=0; edit=null; });
+$('#btnExcluir').onclick=async()=>{
+  if(!confirm('Excluir esta nota?')) return;
+  await DB.del(edit.id); notas=notas.filter(n=>n.id!==edit.id); render(); $('#dlgNota').close(); edit=null; toast('Nota excluída');
+};
+function receberArquivos(files){ const arr=[...files]; if(!arr.length) return; const first=arr.shift(); fila.push(...arr); processarArquivo(first); }
+$('#inCamera').onchange=e=>{ receberArquivos(e.target.files); e.target.value=''; };
+$('#inGaleria').onchange=e=>{ receberArquivos(e.target.files); e.target.value=''; };
+
+/* ================= relatório PDF ================= */
+let ultimoPdf=null;
+async function gerarPDF(){
+  const cfg=cfgGet(); const lista=ordenadas();
+  const { jsPDF }=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,H=297,M=15; let y=M;
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('RELATÓRIO DE DESPESAS',M,y+2); y+=9;
+  doc.setFontSize(12); doc.text(meta.nome,M,y); y+=7;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  const total=lista.reduce((s,n)=>s+n.valor,0);
+  const periodo=lista.length?`${fmtData(lista[0].data)} a ${fmtData(lista[lista.length-1].data)}`:'-';
+  const info=[['Responsável',cfg.resp||'-'], ...(cfg.empresa?[['Empresa / obra',cfg.empresa]]:[]), ['Período',periodo], ['Quantidade de notas',String(lista.length)], ['Emitido em',new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})]];
+  info.forEach(([k,v])=>{ doc.setFont('helvetica','bold'); doc.text(k+':',M,y); doc.setFont('helvetica','normal'); doc.text(v,M+42,y); y+=5.5; });
+  doc.autoTable({
+    startY:y+3, margin:{left:M,right:M},
+    head:[['Nº','Data','Descrição','Valor (R$)']],
+    body:lista.map((n,i)=>[String(i+1),fmtData(n.data),n.desc||'-',BRL.format(n.valor).replace('R$','').trim()]),
+    foot:[['','','TOTAL',BRL.format(total).replace('R$','').trim()]],
+    styles:{fontSize:9.5,cellPadding:2.2}, headStyles:{fillColor:[15,81,50]}, footStyles:{fillColor:[232,240,236],textColor:20,fontStyle:'bold'},
+    columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:24},3:{cellWidth:32,halign:'right'}},
+    didParseCell:d=>{ if(d.section!=='body'&&d.column.index===3) d.cell.styles.halign='right'; },
+    showFoot:'lastPage',
+  });
+  y=doc.lastAutoTable.finalY+22;
+  if(y>H-30){ doc.addPage(); y=M+20; }
+  doc.line(W/2-40,y,W/2+40,y); doc.setFontSize(9); doc.text(cfg.resp||'Responsável',W/2,y+5,{align:'center'});
+  // anexos
+  for(let i=0;i<lista.length;i++){
+    const n=lista[i]; doc.addPage();
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text(`Anexo ${i+1}`,M,M+2);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    const leg=doc.splitTextToSize(`${fmtData(n.data)}  •  ${n.desc||'-'}  •  ${BRL.format(n.valor)}`,W-2*M);
+    doc.text(leg,M,M+8);
+    const top=M+10+leg.length*4.5, aw=W-2*M, ah=H-M-10-top;
+    const img=await carregarImagem(n.img); const r=Math.min(aw/img.naturalWidth, ah/img.naturalHeight);
+    const iw=img.naturalWidth*r, ih=img.naturalHeight*r;
+    doc.addImage(n.img,'JPEG',M+(aw-iw)/2,top,iw,ih,undefined,'FAST');
+  }
+  const pg=doc.getNumberOfPages();
+  for(let p=1;p<=pg;p++){ doc.setPage(p); doc.setFontSize(8); doc.setTextColor(120); doc.text(`${meta.nome} — página ${p} de ${pg}`,W/2,H-7,{align:'center'}); doc.setTextColor(0); }
+  const nome=`Relatorio_${slug(meta.nome)}.pdf`;
+  return {blob:doc.output('blob'), nome, total, qtd:lista.length};
+}
+$('#btnPdf').onclick=async()=>{
+  if(!notas.length){ toast('Adicione ao menos uma nota.'); return; }
+  const b=$('#btnPdf'); b.disabled=true; const t=b.innerHTML; b.textContent='Gerando…';
+  try{
+    ultimoPdf=await gerarPDF();
+    const a=$('#pdfBaixar'); if(a.href) URL.revokeObjectURL(a.href);
+    a.href=URL.createObjectURL(ultimoPdf.blob); a.download=ultimoPdf.nome;
+    $('#pdfInfo').textContent=`${ultimoPdf.qtd} notas • total ${BRL.format(ultimoPdf.total)} • ${ultimoPdf.nome}`;
+    $('#pdfStatus').textContent='';
+    $('#pdfCompartilhar').classList.toggle('hidden', !(navigator.canShare && navigator.canShare({files:[new File([ultimoPdf.blob],ultimoPdf.nome,{type:'application/pdf'})]})));
+    $('#dlgPdf').showModal();
+  }catch(e){ console.error(e); toast('Erro ao gerar o PDF: '+e.message,5000); }
+  finally{ b.disabled=false; b.innerHTML=t; }
+};
+$('#pdfCompartilhar').onclick=async()=>{
+  try{ await navigator.share({files:[new File([ultimoPdf.blob],ultimoPdf.nome,{type:'application/pdf'})], title:ultimoPdf.nome}); }catch(e){}
+};
+$('#pdfDrive').onclick=()=>comDrive(async()=>{
+  $('#pdfStatus').textContent='Enviando para o Drive…';
+  const pasta=await drivePasta();
+  const f=await driveUpload({nome:ultimoPdf.nome, blob:ultimoPdf.blob, pasta});
+  $('#pdfStatus').innerHTML=`Salvo no Drive: <a href="${f.webViewLink}" target="_blank" rel="noopener">abrir arquivo</a>`;
+}, s=>$('#pdfStatus').textContent=s);
+
+/* ================= backup local ================= */
+function montarBackup(){ return {app:'notas-consumo',versao:1,meta,notas}; }
+async function importarBackup(obj){
+  if(!obj||!Array.isArray(obj.notas)||!obj.meta) throw new Error('Arquivo inválido');
+  if(notas.length && !confirm(`Substituir a apuração atual ("${meta.nome}", ${notas.length} notas) por "${obj.meta.nome}" (${obj.notas.length} notas)?`)) return false;
+  await DB.clear(); for(const n of obj.notas) await DB.put(n);
+  meta=obj.meta; await DB.setMeta(meta); notas=await DB.all(); render(); return true;
+}
+
+/* ================= menu / config ================= */
+$('#btnMenu').onclick=()=>$('#dlgMenu').showModal();
+$('#dlgMenu').addEventListener('click',async e=>{
+  const act=e.target.dataset&&e.target.dataset.act; if(!act) return; $('#dlgMenu').close();
+  if(act==='config') abrirConfig();
+  if(act==='exportar'){ const blob=new Blob([JSON.stringify(montarBackup())],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Apuracao_${slug(meta.nome)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000); }
+  if(act==='importar') $('#inBackup').click();
+  if(act==='nova'){
+    if(notas.length && !confirm(`Iniciar nova apuração? As ${notas.length} notas atuais serão apagadas deste aparelho.\n\nGere o relatório e/ou salve no Drive antes.`)) return;
+    await DB.clear(); notas=[]; meta=novaMeta(); await DB.setMeta(meta); render(); toast('Nova apuração iniciada');
+  }
+});
+$('#inBackup').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; try{ if(await importarBackup(JSON.parse(await f.text()))) toast('Backup carregado'); }catch(err){ toast('Não foi possível abrir: '+err.message,5000); } };
+function abrirConfig(){ const c=cfgGet(); $('#cResp').value=c.resp||''; $('#cEmpresa').value=c.empresa||''; $('#cClient').value=c.clientId||''; $('#dlgConfig').showModal(); }
+$('#formConfig').addEventListener('submit',()=>{
+  const c=cfgGet(); const antes=c.clientId;
+  c.resp=$('#cResp').value.trim(); c.empresa=$('#cEmpresa').value.trim(); c.clientId=$('#cClient').value.trim();
+  cfgSet(c); if(c.clientId!==antes){ tokenClient=null; token=null; iniciarGoogle(); } toast('Configurações salvas');
+});
+
+/* ================= Google Drive ================= */
+const SCOPE='https://www.googleapis.com/auth/drive.file', PASTA='Notas de Consumo';
+let tokenClient=null, token=null, tokenExp=0, pend=null, pastaId=null;
+function iniciarGoogle(){
+  const cid=cfgGet().clientId; if(!cid) return;
+  const init=()=>{ try{
+    tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid, scope:SCOPE,
+      callback:r=>{ const p=pend; pend=null; if(!p) return; if(r.error) p.rej(new Error(r.error_description||r.error)); else { token=r.access_token; tokenExp=Date.now()+(r.expires_in-60)*1000; p.res(); } },
+      error_callback:e=>{ const p=pend; pend=null; if(p) p.rej(new Error(e.type==='popup_closed'?'Login cancelado':(e.message||e.type))); } });
+  }catch(e){ console.error(e); } };
+  if(window.google&&google.accounts&&google.accounts.oauth2) return init();
+  if(!document.getElementById('gsi')){ const s=document.createElement('script'); s.id='gsi'; s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=init; document.head.appendChild(s); }
+}
+function comDrive(fn,status){
+  const st=status||(s=>$('#driveStatus').textContent=s);
+  if(!cfgGet().clientId){ toast('Primeiro informe o Google Client ID nas Configurações.',4000); abrirConfig(); return; }
+  if(!tokenClient){ iniciarGoogle(); st('Carregando Google… toque de novo em alguns segundos.'); return; }
+  const run=()=>fn().catch(e=>{ console.error(e); if(/401/.test(e.message)) token=null; st('Erro: '+e.message); });
+  if(token && Date.now()<tokenExp) return run();
+  st('Aguardando login do Google…');
+  new Promise((res,rej)=>{ pend={res,rej}; tokenClient.requestAccessToken({prompt:''}); }).then(run).catch(e=>st('Erro: '+e.message));
+}
+async function gfetch(url,opt={}){
+  opt.headers=Object.assign({},opt.headers,{Authorization:'Bearer '+token});
+  const r=await fetch(url,opt);
+  if(!r.ok){ const t=await r.text(); const err=new Error(`Drive ${r.status}: ${t.slice(0,160)}`); err.status=r.status; throw err; }
+  return r;
+}
+async function drivePasta(){
+  if(pastaId) return pastaId;
+  const q=encodeURIComponent(`name='${PASTA}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const j=await (await gfetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`)).json();
+  if(j.files&&j.files.length) return pastaId=j.files[0].id;
+  const c=await (await gfetch('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:PASTA,mimeType:'application/vnd.google-apps.folder'})})).json();
+  return pastaId=c.id;
+}
+async function driveUpload({nome,blob,pasta,fileId}){
+  const fd=new FormData();
+  fd.append('metadata',new Blob([JSON.stringify(fileId?{name:nome}:{name:nome,parents:[pasta]})],{type:'application/json'}));
+  fd.append('file',blob);
+  const base='https://www.googleapis.com/upload/drive/v3/files';
+  const qs='?uploadType=multipart&fields=id,name,webViewLink';
+  if(fileId){
+    try{ return await (await gfetch(`${base}/${fileId}${qs}`,{method:'PATCH',body:fd})).json(); }
+    catch(e){ if(e.status!==404) throw e; return driveUpload({nome,blob,pasta}); }
+  }
+  return (await gfetch(base+qs,{method:'POST',body:fd})).json();
+}
+$('#btnDrive').onclick=()=>{ $('#driveLista').innerHTML=''; $('#driveStatus').textContent=''; iniciarGoogle(); $('#dlgDrive').showModal(); };
+$('#btnDriveSalvar').onclick=()=>comDrive(async()=>{
+  $('#driveStatus').textContent='Salvando no Drive…';
+  const pasta=await drivePasta();
+  const blob=new Blob([JSON.stringify(montarBackup())],{type:'application/json'});
+  const f=await driveUpload({nome:`Apuracao - ${meta.nome}.json`,blob,pasta,fileId:meta.driveFileId});
+  meta.driveFileId=f.id; await DB.setMeta(meta);
+  $('#driveStatus').textContent=`Salvo: ${f.name} (${new Date().toLocaleTimeString('pt-BR')})`;
+});
+$('#btnDriveAbrir').onclick=()=>comDrive(async()=>{
+  $('#driveStatus').textContent='Buscando apurações…';
+  const pasta=await drivePasta();
+  const q=encodeURIComponent(`'${pasta}' in parents and mimeType='application/json' and trashed=false`);
+  const j=await (await gfetch(`https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime desc&fields=files(id,name,modifiedTime)`)).json();
+  const L=$('#driveLista'); L.innerHTML='';
+  if(!j.files.length){ $('#driveStatus').textContent='Nenhuma apuração salva no Drive ainda.'; return; }
+  $('#driveStatus').textContent='Toque na apuração para abrir:';
+  j.files.forEach(f=>{
+    const b=document.createElement('button'); b.className='btn'; b.style.justifyContent='space-between';
+    b.innerHTML='<span></span><small></small>'; b.firstChild.textContent=f.name.replace(/^Apuracao - |\.json$/g,''); b.lastChild.textContent=new Date(f.modifiedTime).toLocaleDateString('pt-BR');
+    b.onclick=()=>comDrive(async()=>{
+      $('#driveStatus').textContent='Baixando…';
+      const obj=await (await gfetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`)).json();
+      obj.meta.driveFileId=f.id;
+      if(await importarBackup(obj)){ $('#dlgDrive').close(); toast('Apuração carregada do Drive'); } else $('#driveStatus').textContent='';
+    });
+    L.appendChild(b);
+  });
+});
+
+/* ================= início ================= */
+carregar().catch(e=>{ console.error(e); toast('Erro ao abrir o banco local: '+e.message,6000); });
+iniciarGoogle();
+</script>
+</body>
+</html>
