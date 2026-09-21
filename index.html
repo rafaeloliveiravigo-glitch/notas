@@ -104,8 +104,8 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 #nomeApuracao{font-size:18px!important;font-weight:500!important;margin-top:4px!important}
 #nomeApuracao::placeholder{color:rgba(255,255,255,.55)}
 .tabs{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.05)}
-.tabs .wrap{display:grid;grid-template-columns:1fr 1fr}
-.tabs button{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:13px 6px 11px;font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.tabs .wrap{display:grid;grid-template-columns:1.15fr .85fr 1.1fr;gap:6px}
+.tabs button{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:13px 2px 11px;font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;letter-spacing:.04em;line-height:1.1;text-transform:uppercase;color:var(--muted);cursor:pointer}
 .tabs button.on{color:var(--pri2);border-bottom-color:var(--pri2)}
 .tabs .cnt{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:var(--line);color:var(--text);font-size:13px;letter-spacing:0}
 .tabs .cnt:empty{display:none}
@@ -146,6 +146,20 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 @media (prefers-color-scheme: dark){ .tr.tf{background:#1f2e45} }
 .pednum{display:inline-flex;align-items:center;gap:10px;cursor:pointer;background:none;border:0;color:#fff;padding:0}
 .pednum svg{width:18px;height:18px;opacity:.7}
+.extbox{display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:end;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.extfile{min-width:0}
+.extfile span{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.extfile b{display:block;font-size:14px;line-height:1.3;word-break:break-word}
+.extgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ext{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ext img{display:block;width:100%;height:190px;object-fit:cover;object-position:top;background:var(--line);cursor:zoom-in}
+.ext .pg{position:absolute;left:8px;top:8px;background:rgba(11,37,69,.85);color:#fff;font-family:"Barlow Condensed",sans-serif;font-weight:700;letter-spacing:.06em;font-size:13px;padding:2px 8px;border-radius:6px}
+.ext-acts{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.ext-acts button{appearance:none;border:0;background:none;color:var(--text);height:38px;font-size:20px;cursor:pointer;display:grid;place-items:center}
+.ext-acts button:disabled{opacity:.25}
+.ext-acts button.x{color:var(--muted)}
+.ext-acts button.x svg{width:18px;height:18px}
+.ext-acts button+button{border-left:1px solid var(--line)}
 .hidden{display:none!important}
 </style>
 </head>
@@ -180,6 +194,7 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 <nav class="tabs"><div class="wrap">
   <button data-tab="lanc" class="on">Lançamentos</button>
   <button data-tab="ped">Pedidos <span class="cnt" id="pedCount"></span></button>
+  <button data-tab="ext">Extrato do Cartão <span class="cnt" id="extCount"></span></button>
 </div></nav>
 
 <main class="wrap">
@@ -202,6 +217,29 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
   <p class="hint" style="margin:16px 0 10px">Últimos pedidos fechados. Toque para ver, baixar ou refazer.</p>
   <div class="list" id="listaPed"></div>
  </section>
+ <section id="vExt" class="hidden">
+  <div class="capture">
+    <label class="btn pri big">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      Fotografar extrato
+      <input type="file" accept="image/*" capture="environment" id="inExtCam" hidden>
+    </label>
+    <label class="btn big">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>
+      Galeria
+      <input type="file" accept="image/*" multiple id="inExtGal" hidden>
+    </label>
+  </div>
+  <div class="extbox">
+    <label class="f">Vincular ao Pedido Nº<input id="extNum" type="number" min="1" inputmode="numeric"></label>
+    <div class="extfile"><span>Arquivo</span><b id="extArquivo"></b></div>
+  </div>
+  <p class="hint" id="extDriveInfo" style="margin:0 2px 10px"></p>
+  <div class="extgrid" id="extGrid"></div>
+  <p class="hint" style="margin:10px 2px 0">As páginas saem no PDF nesta ordem. Use ‹ › para reordenar e ↻ para girar. Toque na foto para ampliar.</p>
+  <div class="status" id="extStatus" style="margin-top:8px"></div>
+  <button class="btn danger" id="btnExtLimpar" style="margin-top:6px">Apagar fotos do extrato</button>
+ </section>
 </main>
 
 <div class="bar" id="barLanc">
@@ -209,6 +247,15 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
     <button class="btn pri big" id="btnPdf" style="grid-column:1/-1">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>
       <span id="btnPdfTxt">Fechar pedido e gerar relatório</span>
+    </button>
+  </div>
+</div>
+
+<div class="bar hidden" id="barExt">
+  <div class="wrap">
+    <button class="btn pri big" id="btnExtGerar" style="grid-column:1/-1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+      Gerar relatório do extrato
     </button>
   </div>
 </div>
@@ -303,6 +350,21 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
   </form>
 </dialog>
 
+<!-- Extrato pronto -->
+<dialog id="dlgExt">
+  <div class="dlg">
+    <h2 id="extTitulo">Extrato</h2>
+    <p class="hint" id="extInfo"></p>
+    <div class="menu">
+      <a class="btn pri" id="extAbrir" target="_blank" rel="noopener">Abrir no Google Drive</a>
+      <div class="row2"><button class="btn" id="extBaixar">Baixar PDF</button><button class="btn" id="extCompartilhar">Compartilhar</button></div>
+      <button class="btn danger" id="extRefazer">Relatório errado? Excluir do Drive</button>
+    </div>
+    <div class="status" id="extDlgStatus"></div>
+    <div class="actions"><button class="btn" data-close>Fechar</button></div>
+  </div>
+</dialog>
+
 <!-- Fechar pedido -->
 <dialog id="dlgFechar">
   <div class="dlg">
@@ -369,12 +431,13 @@ const DB = {
   db:null,
   mem:null, // modo memória (quando o navegador bloqueia o armazenamento)
   open(){ return new Promise((res)=>{
-    const fallback=()=>{ this.mem={meta:new Map(),notas:new Map(),pedidos:new Map()}; setTimeout(()=>toast('Modo de teste: as notas não ficam salvas neste navegador.',5000),300); res(); };
-    try{ const r=indexedDB.open('notasConsumo',2);
+    const fallback=()=>{ this.mem={meta:new Map(),notas:new Map(),pedidos:new Map(),extrato:new Map()}; setTimeout(()=>toast('Modo de teste: as notas não ficam salvas neste navegador.',5000),300); res(); };
+    try{ const r=indexedDB.open('notasConsumo',3);
       r.onupgradeneeded=()=>{ const d=r.result;
         if(!d.objectStoreNames.contains('meta')) d.createObjectStore('meta');
         if(!d.objectStoreNames.contains('notas')) d.createObjectStore('notas',{keyPath:'id'});
-        if(!d.objectStoreNames.contains('pedidos')) d.createObjectStore('pedidos',{keyPath:'id'}); };
+        if(!d.objectStoreNames.contains('pedidos')) d.createObjectStore('pedidos',{keyPath:'id'});
+        if(!d.objectStoreNames.contains('extrato')) d.createObjectStore('extrato',{keyPath:'id'}); };
       r.onsuccess=()=>{ this.db=r.result; res(); }; r.onerror=fallback; r.onblocked=fallback;
     }catch(e){ fallback(); } }); },
   tx(store,mode,fn){ if(this.mem) return Promise.resolve(fn(this.memStore(store))); return new Promise((res,rej)=>{ const t=this.db.transaction(store,mode); const s=t.objectStore(store); const out=fn(s); t.oncomplete=()=>res(out instanceof IDBRequest?out.result:out); t.onerror=()=>rej(t.error); }); },
@@ -387,12 +450,19 @@ const DB = {
   pedAll(){ return this.tx('pedidos','readonly',s=>s.getAll()); },
   pedPut(p){ return this.tx('pedidos','readwrite',s=>s.put(p)); },
   pedDel(id){ return this.tx('pedidos','readwrite',s=>s.delete(id)); },
+  extAll(){ return this.tx('extrato','readonly',s=>s.getAll()); },
+  extPut(e){ return this.tx('extrato','readwrite',s=>s.put(e)); },
+  extDel(id){ return this.tx('extrato','readwrite',s=>s.delete(id)); },
+  extClear(){ return this.tx('extrato','readwrite',s=>s.clear()); },
+  getKey(k){ return this.tx('meta','readonly',s=>s.get(k)); },
+  setKey(k,v){ return this.tx('meta','readwrite',s=>s.put(v,k)); },
   memStore(nome){ const m=this.mem[nome]; return {
     get:k=>m.get(k), getAll:()=>[...m.values()], delete:k=>m.delete(k), clear:()=>m.clear(),
     put:(v,k)=>m.set(k!==undefined?k:v.id, v) }; },
 };
 
 /* ================= estado ================= */
+let extratoPronto=false;
 let meta = null, notas = [], pedidos = [];
 const fmtNum = n => String(n||0).padStart(4,'0');
 const proximoNumero = () => Math.max(0,...pedidos.map(p=>p.numero||0))+1;
@@ -405,6 +475,7 @@ async function carregar(){
   if(!meta.numero){ meta.numero=proximoNumero(); if(/^Despesas /.test(meta.nome||'')) meta.nome=''; await DB.setMeta(meta); }
   notas = await DB.all();
   render();
+  await carregarExtrato();
 }
 function ordenar(lista){ return [...lista].sort((a,b)=> (a.data||'').localeCompare(b.data||'') || (a.criado||'').localeCompare(b.criado||'')); }
 function ordenadas(){ return ordenar(notas); }
@@ -416,6 +487,7 @@ function render(){
   $('#stQtd').textContent = notas.length;
   $('#stTotal').textContent = BRL.format(total);
   $('#btnPdfTxt').textContent = `Fechar Pedido Nº ${fmtNum(meta.numero)} e gerar relatório`;
+  if(!window._extNumManual && $('#extNum')){ $('#extNum').value=meta.numero; if(typeof renderExtrato==='function' && extratoPronto) renderExtrato(); }
   const L=$('#lista'); L.innerHTML='';
   if(!notas.length){ L.innerHTML='<div class="empty">Nenhuma nota neste pedido.<br>Toque em <b>Fotografar nota</b> para começar.</div>'; renderPedidos(); return; }
   const tb=document.createElement('div'); tb.className='tabela';
@@ -462,8 +534,9 @@ $('#formNum').addEventListener('submit',async e=>{
 /* ================= abas ================= */
 function trocarAba(aba){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===aba));
-  $('#vLanc').classList.toggle('hidden',aba!=='lanc'); $('#vPed').classList.toggle('hidden',aba!=='ped');
-  $('#barLanc').classList.toggle('hidden',aba!=='lanc');
+  $('#vLanc').classList.toggle('hidden',aba!=='lanc'); $('#vPed').classList.toggle('hidden',aba!=='ped'); $('#vExt').classList.toggle('hidden',aba!=='ext');
+  $('#barLanc').classList.toggle('hidden',aba!=='lanc'); $('#barExt').classList.toggle('hidden',aba!=='ext');
+  if(aba==='ext') renderExtrato();
   window.scrollTo({top:0});
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>trocarAba(b.dataset.tab));
@@ -819,6 +892,138 @@ $('#formConfig').addEventListener('submit',async()=>{
   }
   toast('Configurações salvas');
 });
+
+/* ================= extrato do cartão ================= */
+let extrato=[], extDrive={}; // extDrive[numero] = {id, link}
+const nomeExtrato = n => `Extrato Cartão - Pedido Nº ${fmtNum(n)}.pdf`;
+async function carregarExtrato(){
+  extrato = ((await DB.extAll())||[]).sort((a,b)=>a.ordem-b.ordem); extratoPronto=true;
+  extDrive = (await DB.getKey('extDrive')) || {};
+  if(!$('#extNum').value) $('#extNum').value=meta.numero;
+  renderExtrato();
+}
+function renderExtrato(){
+  $('#extCount').textContent = extrato.length || '';
+  const G=$('#extGrid'); G.innerHTML='';
+  if(!extrato.length){ G.innerHTML='<div class="empty" style="grid-column:1/-1">Nenhuma foto do extrato ainda.<br>Toque em <b>Fotografar extrato</b> ou <b>Galeria</b>.</div>'; }
+  extrato.forEach((e,i)=>{
+    const d=document.createElement('div'); d.className='ext';
+    d.innerHTML=`<img alt=""><span class="pg">Pág. ${i+1}</span>
+      <div class="ext-acts">
+        <button data-a="esq" title="Mover para trás" ${i===0?'disabled':''}>‹</button>
+        <button data-a="girar" title="Girar">↻</button>
+        <button data-a="dir" title="Mover para frente" ${i===extrato.length-1?'disabled':''}>›</button>
+        <button data-a="del" title="Excluir" class="x">${ICON_LIXO}</button>
+      </div>`;
+    d.querySelector('img').src=e.img;
+    d.querySelector('img').onclick=()=>{ const w=window.open(); if(w){ w.document.write(`<title>Extrato pág. ${i+1}</title><body style="margin:0;background:#111"><img src="${e.img}" style="width:100%">`); } };
+    d.querySelectorAll('button').forEach(b=>b.onclick=()=>acaoExtrato(b.dataset.a,i));
+    G.appendChild(d);
+  });
+  const n=parseInt($('#extNum').value,10)||meta.numero;
+  $('#extArquivo').textContent = nomeExtrato(n);
+  const jaNoDrive = extDrive[n];
+  $('#extDriveInfo').innerHTML='';
+  if(jaNoDrive){ $('#extDriveInfo').innerHTML='Já existe no Drive: <a target="_blank" rel="noopener"></a>. Gerar de novo substitui o arquivo.'; const a=$('#extDriveInfo a'); a.href=jaNoDrive.link; a.textContent='abrir arquivo'; }
+  $('#btnExtGerar').disabled=!extrato.length;
+}
+async function acaoExtrato(a,i){
+  const e=extrato[i];
+  if(a==='del'){ if(!confirm(`Excluir a página ${i+1} do extrato?`)) return; await DB.extDel(e.id); extrato.splice(i,1); }
+  if(a==='girar'){ const img=await carregarImagem(e.img); e.img=desenhar(img,2200,90).toDataURL('image/jpeg',0.85); await DB.extPut(e); }
+  if(a==='esq'||a==='dir'){ const j=a==='esq'?i-1:i+1; [extrato[i],extrato[j]]=[extrato[j],extrato[i]]; }
+  extrato.forEach((x,k)=>x.ordem=k); for(const x of extrato) await DB.extPut(x);
+  renderExtrato();
+}
+async function adicionarExtrato(files){
+  const arr=[...files]; if(!arr.length) return;
+  stExt(`Carregando ${arr.length} foto${arr.length>1?'s':''}…`);
+  for(const f of arr){
+    const url=URL.createObjectURL(f);
+    try{ const img=await carregarImagem(url); const e={id:uid(), ordem:extrato.length, img:desenhar(img,2200).toDataURL('image/jpeg',0.85)}; await DB.extPut(e); extrato.push(e); }
+    catch(err){ console.error(err); toast('Não foi possível abrir uma das fotos.'); }
+    finally{ URL.revokeObjectURL(url); }
+  }
+  stExt(''); renderExtrato();
+}
+$('#inExtCam').onchange=e=>{ adicionarExtrato(e.target.files); e.target.value=''; };
+$('#inExtGal').onchange=e=>{ adicionarExtrato(e.target.files); e.target.value=''; };
+$('#extNum').addEventListener('input',()=>{ window._extNumManual=true; renderExtrato(); });
+function stExt(s){ $('#extStatus').textContent=s; }
+$('#btnExtLimpar').onclick=async()=>{
+  if(!extrato.length) return;
+  if(!confirm(`Apagar as ${extrato.length} fotos do extrato deste aparelho?`)) return;
+  await DB.extClear(); extrato=[]; renderExtrato(); toast('Fotos do extrato apagadas');
+};
+
+async function gerarPDFExtrato(num){
+  const cfg=cfgGet(); const { jsPDF }=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,H=297,M=12;
+  doc.setFillColor(11,37,69); doc.rect(0,0,W,24,'F'); doc.setFillColor(242,183,5); doc.rect(0,24,W,1.5,'F');
+  doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('EXTRATO DO CARTÃO',M,11);
+  doc.setFontSize(12); doc.text(`PEDIDO Nº ${fmtNum(num)}`,M,19);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  const ref = num===meta.numero ? meta.nome : ((pedidos.find(p=>p.numero===num)||{}).ref||'');
+  const linhas=[cfg.resp?`Responsável: ${cfg.resp}`:'', cfg.empresa||'', ref?`Ref.: ${ref}`:''].filter(Boolean);
+  linhas.forEach((t,k)=>doc.text(t,W-M,8+k*5,{align:'right'}));
+  doc.setTextColor(0);
+  for(let i=0;i<extrato.length;i++){
+    if(i>0) doc.addPage();
+    const top = i===0 ? 31 : M, ah = H-top-14, aw = W-2*M;
+    const img=await carregarImagem(extrato[i].img); const r=Math.min(aw/img.naturalWidth, ah/img.naturalHeight);
+    const iw=img.naturalWidth*r, ih=img.naturalHeight*r;
+    doc.addImage(extrato[i].img,'JPEG',M+(aw-iw)/2,top,iw,ih,undefined,'FAST');
+  }
+  const pg=doc.getNumberOfPages();
+  const emit=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  for(let p=1;p<=pg;p++){ doc.setPage(p); doc.setFontSize(8); doc.setTextColor(120); doc.text(`Extrato do cartão — Pedido Nº ${fmtNum(num)} — emitido em ${emit} — página ${p} de ${pg}`,W/2,H-6,{align:'center'}); doc.setTextColor(0); }
+  return {blob:doc.output('blob'), nome:nomeExtrato(num), qtd:extrato.length};
+}
+let extPdf=null, extArmado=false;
+function numExtrato(){ const n=parseInt($('#extNum').value,10); return n>0?n:meta.numero; }
+$('#btnExtGerar').onclick=()=>{
+  if(!extrato.length){ toast('Adicione as fotos do extrato.'); return; }
+  const num=numExtrato();
+  const gerar=async(enviar)=>{
+    $('#btnExtGerar').disabled=true;
+    try{
+      stExt('Gerando o PDF…'); extPdf=await gerarPDFExtrato(num); extPdf.num=num;
+      if(enviar){
+        stExt('Enviando ao Google Drive…');
+        const pasta=await drivePasta(); const ant=extDrive[num];
+        const f=await driveUpload({nome:extPdf.nome, blob:extPdf.blob, pasta, fileId:ant&&ant.id});
+        extDrive[num]={id:f.id, link:f.webViewLink}; await DB.setKey('extDrive',extDrive);
+      }
+      stExt(''); abrirExtratoPronto(enviar);
+      if(!enviar) baixar(extPdf);
+    } finally { $('#btnExtGerar').disabled=false; renderExtrato(); }
+  };
+  if(cfgGet().clientId) comDrive(()=>gerar(true), s=>stExt(s));
+  else gerar(false).catch(e=>stExt('Erro: '+e.message));
+};
+function abrirExtratoPronto(noDrive){
+  extArmado=false;
+  const d=extDrive[extPdf.num];
+  $('#extTitulo').textContent=extPdf.nome.replace(/\.pdf$/,'');
+  $('#extInfo').textContent=`${extPdf.qtd} página${extPdf.qtd>1?'s':''} • ${noDrive?'salvo na pasta Notas de Consumo do Google Drive':'PDF baixado no aparelho (Drive não configurado)'}`;
+  const a=$('#extAbrir'); a.classList.toggle('hidden',!(noDrive&&d)); if(d) a.href=d.link;
+  $('#extRefazer').classList.toggle('hidden',!(noDrive&&d)); $('#extRefazer').textContent='Relatório errado? Excluir do Drive';
+  $('#extCompartilhar').classList.toggle('hidden',!navigator.canShare);
+  $('#extDlgStatus').textContent='';
+  $('#dlgExt').showModal();
+}
+$('#extBaixar').onclick=()=>baixar(extPdf);
+$('#extCompartilhar').onclick=async()=>{ const file=new File([extPdf.blob],extPdf.nome,{type:'application/pdf'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file],title:extPdf.nome}); }catch(e){} } else $('#extDlgStatus').textContent='Este navegador não permite compartilhar arquivos. Use Baixar PDF.'; };
+$('#extRefazer').onclick=()=>{
+  const num=extPdf.num, d=extDrive[num]; if(!d) return;
+  if(!extArmado){ extArmado=true; $('#extRefazer').textContent='Toque de novo para confirmar'; $('#extDlgStatus').textContent='O PDF será apagado do Drive. As fotos continuam aqui para você ajustar e gerar de novo.'; return; }
+  comDrive(async()=>{
+    $('#extDlgStatus').textContent='Apagando do Drive…';
+    try{ await gfetch(`https://www.googleapis.com/drive/v3/files/${d.id}`,{method:'DELETE'}); }catch(e){ if(e.status!==404) throw e; }
+    delete extDrive[num]; await DB.setKey('extDrive',extDrive);
+    $('#dlgExt').close(); renderExtrato(); toast('Extrato excluído do Drive. Ajuste as fotos e gere de novo.',4000);
+  }, s=>$('#extDlgStatus').textContent=s);
+};
 
 /* ================= Google Drive ================= */
 const SCOPE='https://www.googleapis.com/auth/drive.file', PASTA='Notas de Consumo';

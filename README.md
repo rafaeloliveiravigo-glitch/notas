@@ -75,12 +75,13 @@ O app precisa de um **ID do cliente** do Google para pedir permissão de salvar 
 
 1. **Fotografar nota** (ou **Galeria**, que aceita várias fotos de uma vez).
 2. O app lê a nota e preenche os campos. Os **campos em amarelo** foram lidos automaticamente: confira e corrija se precisar. Se a foto ficou de lado, toque em **Girar**.
-3. **Salvar.** A nota entra na lista, **agrupada por data** (da mais antiga para a mais recente). Toque numa nota para editar; a **lixeira** exclui.
+3. **Salvar.** A nota entra na tabela (Data · Descrição · Valor), da mais antiga para a mais recente. Toque numa linha para ver a foto ou editar; a **lixeira** exclui.
 4. As notas lançadas formam o **Pedido Nº xxxx em aberto** (topo). Se quiser, preencha a **Referência** (ex.: `Obra X / Setembro`).
 5. No fim: **Fechar Pedido e gerar relatório** → **Gerar relatório e salvar no Google Drive**. O PDF vai direto para a pasta **Notas de Consumo** do Drive, o pedido vai para a aba **Pedidos** e um novo pedido (próximo número) é aberto.
 6. Aba **Pedidos**: lista dos últimos pedidos fechados. Toque num pedido para abrir no Drive, baixar ou compartilhar o PDF.
 7. **Relatório saiu errado?** Abra o último pedido → **Relatório errado? Excluir e refazer** (toque duas vezes para confirmar). O PDF é apagado do Drive e as notas voltam para a lista com o mesmo número de pedido. Corrija e gere de novo.
-8. Para mudar a numeração (ex.: começar no pedido 15): **⋮ → Configurações → Número do pedido em aberto**.
+8. Para mudar o número do pedido em aberto, toque no **Nº** (ícone de lápis) no topo.
+9. Aba **Extrato do Cartão**: fotografe (ou escolha da galeria) as páginas do extrato. Use **‹ ›** para mudar a ordem, **↻** para girar e a lixeira para excluir. Confira o **Pedido Nº** vinculado (vem preenchido com o pedido em aberto) e toque em **Gerar relatório do extrato**. O PDF **Extrato Cartão - Pedido Nº xxxx** vai direto para a pasta **Notas de Consumo** do Drive. Gerar de novo para o mesmo pedido substitui o arquivo; se sair errado, use **Relatório errado? Excluir do Drive**.
 
 **Dicas para a leitura sair certa:** nota esticada sobre fundo escuro, boa luz, sem sombra, foto de frente e enquadrando a nota inteira. Cupom muito longo: tire a foto da parte de baixo (onde estão total e data) e confira a descrição.
 
