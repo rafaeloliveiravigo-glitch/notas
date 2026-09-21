@@ -24,7 +24,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 "Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .cond{font-family:"Barlow Condensed","Barlow",system-ui,sans-serif}
-body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .wrap{max-width:640px;margin:0 auto;padding:0 16px}
 header{position:relative;overflow:hidden;color:#fff;padding:calc(14px + env(safe-area-inset-top)) 0 20px;
   background:linear-gradient(135deg,#0b2545 0%,#13396b 60%,#1560bd 130%)}
@@ -129,6 +129,23 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 .row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
 .tabs button:focus{outline:none}.tabs button:focus-visible{outline:2px solid var(--pri2)}
 .row2 .btn{justify-content:center}
+.tabela{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tr{display:grid;grid-template-columns:70px minmax(0,1fr) 92px 34px;align-items:center;gap:8px;padding:0 4px 0 12px;min-height:44px;border-bottom:1px solid var(--line);cursor:pointer;font-size:15px}
+.tr:nth-child(odd):not(.th):not(.tf){background:rgba(21,96,189,.04)}
+.tr:not(.th):not(.tf):active{background:rgba(21,96,189,.12)}
+.tr .c-data{color:var(--muted);font-variant-numeric:tabular-nums}
+.tr .c-desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.tr .c-val{font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tr .r{text-align:right}
+.tr.th{min-height:34px;cursor:default;background:var(--pri);color:#fff;font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.tr.tf{cursor:default;border-bottom:0;background:#e4ecf6;font-family:"Barlow Condensed",sans-serif;font-weight:800;letter-spacing:.06em}
+.tr.tf .r{font-size:19px}
+.tr .del{width:34px;height:34px;border:0;background:transparent;color:var(--muted);border-radius:8px;display:grid;place-items:center;cursor:pointer}
+.tr .del:hover,.tr .del:active{background:rgba(180,35,24,.1);color:var(--danger)}
+.tr .del svg{width:18px;height:18px}
+@media (prefers-color-scheme: dark){ .tr.tf{background:#1f2e45} }
+.pednum{display:inline-flex;align-items:center;gap:10px;cursor:pointer;background:none;border:0;color:#fff;padding:0}
+.pednum svg{width:18px;height:18px;opacity:.7}
 .hidden{display:none!important}
 </style>
 </head>
@@ -150,7 +167,7 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
     </div>
     <div class="namebox">
       <label for="nomeApuracao">Pedido em aberto</label>
-      <div class="pednum" id="pedNum">Nº 0001</div>
+      <button type="button" class="pednum" id="btnNum" title="Alterar número do pedido"><span id="pedNum">Nº 0001</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
       <input id="nomeApuracao" autocomplete="off" placeholder="Referência (opcional) – ex.: Obra X / Setembro">
     </div>
     <div class="stats">
@@ -273,6 +290,19 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
   </div>
 </dialog>
 
+<!-- Alterar número -->
+<dialog id="dlgNum">
+  <form class="dlg" method="dialog" id="formNum">
+    <h2>Número do pedido</h2>
+    <label class="f">Pedido em aberto Nº<input id="inNum" type="number" min="1" inputmode="numeric" required></label>
+    <p class="hint" id="numHint">Os próximos pedidos seguem a sequência a partir deste número.</p>
+    <div class="actions">
+      <button type="button" class="btn" data-close>Cancelar</button>
+      <button type="submit" class="btn pri">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- Fechar pedido -->
 <dialog id="dlgFechar">
   <div class="dlg">
@@ -387,22 +417,27 @@ function render(){
   $('#stTotal').textContent = BRL.format(total);
   $('#btnPdfTxt').textContent = `Fechar Pedido Nº ${fmtNum(meta.numero)} e gerar relatório`;
   const L=$('#lista'); L.innerHTML='';
-  if(!notas.length){ L.innerHTML='<div class="empty">Nenhuma nota neste pedido.<br>Toque em <b>Fotografar nota</b> para começar.</div>'; }
-  let diaAnt=null;
+  if(!notas.length){ L.innerHTML='<div class="empty">Nenhuma nota neste pedido.<br>Toque em <b>Fotografar nota</b> para começar.</div>'; renderPedidos(); return; }
+  const tb=document.createElement('div'); tb.className='tabela';
+  tb.innerHTML='<div class="tr th"><span>Data</span><span>Descrição</span><span class="r">Valor</span><span></span></div>';
   ordenadas().forEach(n=>{
-    if(n.data!==diaAnt){ diaAnt=n.data; const h=document.createElement('div'); h.className='dia'; h.textContent=rotuloDia(n.data); L.appendChild(h); }
-    const el=document.createElement('div'); el.className='item';
-    el.innerHTML=`<img alt=""><div class="info"><div class="desc"></div><div class="date"></div></div><div class="val"></div><button class="del" aria-label="Excluir lançamento" title="Excluir">${ICON_LIXO}</button>`;
-    el.querySelector('img').src=n.img;
-    el.querySelector('.desc').textContent=n.desc||'(sem descrição)';
-    el.querySelector('.date').textContent=fmtData(n.data);
-    el.querySelector('.val').textContent=BRL.format(n.valor||0);
+    const el=document.createElement('div'); el.className='tr';
+    el.innerHTML=`<span class="c-data"></span><span class="c-desc"></span><span class="c-val r"></span><button class="del" aria-label="Excluir lançamento" title="Excluir">${ICON_LIXO}</button>`;
+    el.querySelector('.c-data').textContent=fmtDataCurta(n.data);
+    el.querySelector('.c-desc').textContent=n.desc||'(sem descrição)';
+    el.querySelector('.c-val').textContent=BRL.format(n.valor||0).replace('R$','').trim();
     el.onclick=()=>abrirEditor(n);
     el.querySelector('.del').onclick=e=>{ e.stopPropagation(); excluirNota(n); };
-    L.appendChild(el);
+    tb.appendChild(el);
   });
+  const ft=document.createElement('div'); ft.className='tr tf';
+  ft.innerHTML=`<span style="grid-column:1/3;white-space:nowrap">TOTAL · ${notas.length} nota${notas.length>1?'s':''}</span><span class="r"></span><span></span>`;
+  ft.children[1].textContent=BRL.format(total).replace('R$','').trim(); tb.appendChild(ft);
+  L.appendChild(tb);
+  const h=document.createElement('p'); h.className='hint'; h.style.margin='8px 2px 0'; h.textContent='Toque numa linha para ver a foto ou editar.'; L.appendChild(h);
   renderPedidos();
 }
+const fmtDataCurta = iso => iso ? iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(2,4) : '--';
 function rotuloDia(iso){
   if(!iso) return 'Sem data';
   const d=new Date(iso+'T12:00:00'); const s=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
@@ -413,6 +448,16 @@ async function excluirNota(n){
   await DB.del(n.id); notas=notas.filter(x=>x.id!==n.id); render(); toast('Lançamento excluído');
 }
 $('#nomeApuracao').addEventListener('change',async e=>{ meta.nome=e.target.value.trim(); await DB.setMeta(meta); });
+
+/* ================= número do pedido ================= */
+$('#btnNum').onclick=()=>{ $('#inNum').value=meta.numero; $('#numHint').textContent='Os próximos pedidos seguem a sequência a partir deste número.'; $('#dlgNum').showModal(); setTimeout(()=>$('#inNum').select(),50); };
+$('#formNum').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const n=parseInt($('#inNum').value,10);
+  if(!(n>0)){ $('#numHint').textContent='Informe um número válido.'; return; }
+  if(pedidos.some(p=>p.numero===n)){ $('#numHint').textContent=`O Pedido Nº ${fmtNum(n)} já existe na aba Pedidos. Escolha outro número.`; return; }
+  meta.numero=n; await DB.setMeta(meta); render(); $('#dlgNum').close(); toast(`Pedido em aberto: Nº ${fmtNum(n)}`);
+});
 
 /* ================= abas ================= */
 function trocarAba(aba){
