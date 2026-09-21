@@ -4,7 +4,7 @@ App de navegador para fotografar notas, ler **data, descrição e valor total** 
 
 - Funciona no celular e no computador, sem instalar nada.
 - A leitura da nota é feita no próprio aparelho (gratuita). Na primeira vez ele baixa o "dicionário" de leitura, que demora uns segundos; depois fica guardado.
-- Os dados ficam salvos no navegador do aparelho. Com o Google Drive configurado, dá para salvar a apuração no Drive e abrir em outro aparelho.
+- Com o Google Drive configurado, **tudo é sincronizado automaticamente** (notas, fotos, pedidos e extrato): o que você lança no celular aparece no computador e vice-versa.
 
 ---
 
@@ -83,6 +83,15 @@ O app precisa de um **ID do cliente** do Google para pedir permissão de salvar 
 8. Para mudar o número do pedido em aberto, toque no **Nº** (ícone de lápis) no topo.
 9. Aba **Extrato do Cartão**: fotografe (ou escolha da galeria) as páginas do extrato. Use **‹ ›** para mudar a ordem, **↻** para girar e a lixeira para excluir. Confira o **Pedido Nº** vinculado (vem preenchido com o pedido em aberto) e toque em **Gerar relatório do extrato**. O PDF **Extrato Cartão - Pedido Nº xxxx** vai direto para a pasta **Notas de Consumo** do Drive. Gerar de novo para o mesmo pedido substitui o arquivo; se sair errado, use **Relatório errado? Excluir do Drive**.
 
+## Sincronização celular ⇄ computador (Google Drive)
+
+- Configure o **mesmo Google Client ID** (⋮ → Configurações) em cada aparelho e entre com a **mesma conta Google**.
+- A faixa no topo mostra a situação: **Sincronizado às hh:mm** (tudo certo), **Salvando no Drive…**, ou **Drive desconectado · toque para sincronizar**.
+- Por segurança o Google libera o acesso por **1 hora**. Depois disso, ao abrir o app, **toque na faixa** para reconectar (é um toque; na maioria das vezes a janela do Google abre e fecha sozinha).
+- Cada alteração é enviada ao Drive em poucos segundos. Ao voltar para o app (ou abrir em outro aparelho), ele baixa o que mudou.
+- Se você alterou nos dois aparelhos sem sincronizar, o app pergunta qual versão manter.
+- Os dados ficam na pasta **Notas de Consumo → _dados do app (não apagar)** do seu Drive. Não apague nem mexa nessa pasta.
+
 **Dicas para a leitura sair certa:** nota esticada sobre fundo escuro, boa luz, sem sombra, foto de frente e enquadrando a nota inteira. Cupom muito longo: tire a foto da parte de baixo (onde estão total e data) e confira a descrição.
 
-**Cuidado:** os dados ficam no navegador. Se você limpar os dados do navegador ou trocar de celular, perde o que não foi salvo. Faça de tempos em tempos um backup em *⋮ → Backup no Google Drive* (ou *Salvar backup no aparelho*).
+**Cuidado:** sem o Drive configurado, os dados ficam só no navegador do aparelho. Se limpar os dados do navegador ou trocar de celular, perde o que não foi sincronizado.

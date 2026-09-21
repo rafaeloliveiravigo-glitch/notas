@@ -160,6 +160,13 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
 .ext-acts button.x{color:var(--muted)}
 .ext-acts button.x svg{width:18px;height:18px}
 .ext-acts button+button{border-left:1px solid var(--line)}
+.sync{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;padding:7px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.sync svg{width:18px;height:18px;flex:none}
+.sync[data-estado=ok] svg{color:#7ee2a8}
+.sync[data-estado=desconectado],.sync[data-estado=pendente-off],.sync[data-estado=erro]{background:rgba(242,183,5,.18);border-color:rgba(242,183,5,.55)}
+.sync[data-estado=desconectado] svg,.sync[data-estado=pendente-off] svg,.sync[data-estado=erro] svg{color:var(--acc)}
+.sync[data-estado=salvando] svg,.sync[data-estado=baixando] svg,.sync[data-estado=verificando] svg,.sync[data-estado=pendente] svg{animation:pulso 1s infinite alternate}
+@keyframes pulso{from{opacity:.35}to{opacity:1}}
 .hidden{display:none!important}
 </style>
 </head>
@@ -184,6 +191,7 @@ details pre{white-space:pre-wrap;max-height:180px;overflow:auto;background:var(-
       <button type="button" class="pednum" id="btnNum" title="Alterar número do pedido"><span id="pedNum">Nº 0001</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
       <input id="nomeApuracao" autocomplete="off" placeholder="Referência (opcional) – ex.: Obra X / Setembro">
     </div>
+    <button type="button" class="sync hidden" id="syncBar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/></svg><span id="syncTxt"></span></button>
     <div class="stats">
       <div><span>Notas</span><b id="stQtd">0</b></div>
       <div><span>Total</span><b id="stTotal">R$ 0,00</b></div>
@@ -440,7 +448,10 @@ const DB = {
         if(!d.objectStoreNames.contains('extrato')) d.createObjectStore('extrato',{keyPath:'id'}); };
       r.onsuccess=()=>{ this.db=r.result; res(); }; r.onerror=fallback; r.onblocked=fallback;
     }catch(e){ fallback(); } }); },
-  tx(store,mode,fn){ if(this.mem) return Promise.resolve(fn(this.memStore(store))); return new Promise((res,rej)=>{ const t=this.db.transaction(store,mode); const s=t.objectStore(store); const out=fn(s); t.oncomplete=()=>res(out instanceof IDBRequest?out.result:out); t.onerror=()=>rej(t.error); }); },
+  tx(store,mode,fn,silent){
+    const avisar=()=>{ if(mode==='readwrite' && !silent) aoAlterar(); };
+    if(this.mem){ const r=fn(this.memStore(store)); avisar(); return Promise.resolve(r); }
+    return new Promise((res,rej)=>{ const t=this.db.transaction(store,mode); const s=t.objectStore(store); const out=fn(s); t.oncomplete=()=>{ avisar(); res(out instanceof IDBRequest?out.result:out); }; t.onerror=()=>rej(t.error); }); },
   getMeta(){ return this.tx('meta','readonly',s=>s.get('atual')); },
   setMeta(m){ return this.tx('meta','readwrite',s=>s.put(m,'atual')); },
   all(){ return this.tx('notas','readonly',s=>s.getAll()); },
@@ -455,7 +466,7 @@ const DB = {
   extDel(id){ return this.tx('extrato','readwrite',s=>s.delete(id)); },
   extClear(){ return this.tx('extrato','readwrite',s=>s.clear()); },
   getKey(k){ return this.tx('meta','readonly',s=>s.get(k)); },
-  setKey(k,v){ return this.tx('meta','readwrite',s=>s.put(v,k)); },
+  setKey(k,v,silent){ return this.tx('meta','readwrite',s=>s.put(v,k),silent); },
   memStore(nome){ const m=this.mem[nome]; return {
     get:k=>m.get(k), getAll:()=>[...m.values()], delete:k=>m.delete(k), clear:()=>m.clear(),
     put:(v,k)=>m.set(k!==undefined?k:v.id, v) }; },
@@ -469,6 +480,7 @@ const proximoNumero = () => Math.max(0,...pedidos.map(p=>p.numero||0))+1;
 function novaMeta(numero){ return {id:uid(), numero, nome:'', criado:new Date().toISOString(), driveFileId:null}; }
 async function carregar(){
   await DB.open();
+  await carregarSync();
   pedidos = (await DB.pedAll()) || [];
   meta = await DB.getMeta();
   if(!meta){ meta=novaMeta(proximoNumero()); await DB.setMeta(meta); }
@@ -476,6 +488,8 @@ async function carregar(){
   notas = await DB.all();
   render();
   await carregarExtrato();
+  setSync('desconectado');
+  if(tokenOk()) sincronizar().catch(erroSync);
 }
 function ordenar(lista){ return [...lista].sort((a,b)=> (a.data||'').localeCompare(b.data||'') || (a.criado||'').localeCompare(b.criado||'')); }
 function ordenadas(){ return ordenar(notas); }
@@ -752,6 +766,7 @@ async function gerarPDF(ped){
     const leg=doc.splitTextToSize(`${fmtData(n.data)}  •  ${n.desc||'-'}  •  ${BRL.format(n.valor)}`,W-2*M);
     doc.text(leg,M,M+8);
     const top=M+10+leg.length*4.5, aw=W-2*M, ah=H-M-10-top;
+    if(!n.img){ doc.text('(foto não disponível neste aparelho)',M,top+8); continue; }
     const img=await carregarImagem(n.img); const r=Math.min(aw/img.naturalWidth, ah/img.naturalHeight);
     const iw=img.naturalWidth*r, ih=img.naturalHeight*r;
     doc.addImage(n.img,'JPEG',M+(aw-iw)/2,top,iw,ih,undefined,'FAST');
@@ -782,6 +797,10 @@ $('#btnFecharCancel').onclick=()=>$('#dlgFechar').close();
 $('#btnFecharDrive').onclick=()=>{ ocupado(true); comDrive(()=>fecharPedido(true).catch(e=>{ ocupado(false); throw e; }), s=>{ stFechar(s); if(/Erro|toque de novo/.test(s)) ocupado(false); }); };
 $('#btnFecharLocal').onclick=async()=>{ ocupado(true); try{ await fecharPedido(false); }catch(e){ console.error(e); stFechar('Erro: '+e.message); ocupado(false); } };
 async function fecharPedido(enviar){
+  window._ocupado=(window._ocupado||0)+1;
+  try{ return await _fecharPedido(enviar); } finally { window._ocupado--; }
+}
+async function _fecharPedido(enviar){
   const lista=ordenadas();
   const ped={id:uid(), numero:meta.numero, ref:meta.nome||'', fechado:new Date().toISOString(), notas:lista, qtd:lista.length, total:Math.round(lista.reduce((s,n)=>s+n.valor,0)*100)/100, drive:null};
   stFechar('Gerando o PDF…');
@@ -884,7 +903,7 @@ function abrirConfig(){ const c=cfgGet(); $('#cResp').value=c.resp||''; $('#cEmp
 $('#formConfig').addEventListener('submit',async()=>{
   const c=cfgGet(); const antes=c.clientId;
   c.resp=$('#cResp').value.trim(); c.empresa=$('#cEmpresa').value.trim(); c.clientId=$('#cClient').value.trim();
-  cfgSet(c); if(c.clientId!==antes){ tokenClient=null; token=null; iniciarGoogle(); }
+  cfgSet(c); if(c.clientId!==antes){ tokenClient=null; token=null; iniciarGoogle(); } setSync('desconectado');
   const n=parseInt($('#cNum').value,10);
   if(n>0 && n!==meta.numero){
     if(pedidos.some(p=>p.numero===n)) toast(`O Pedido Nº ${fmtNum(n)} já existe no histórico. Número mantido.`,4500);
@@ -915,7 +934,7 @@ function renderExtrato(){
         <button data-a="dir" title="Mover para frente" ${i===extrato.length-1?'disabled':''}>›</button>
         <button data-a="del" title="Excluir" class="x">${ICON_LIXO}</button>
       </div>`;
-    d.querySelector('img').src=e.img;
+    if(e.img) d.querySelector('img').src=e.img;
     d.querySelector('img').onclick=()=>{ const w=window.open(); if(w){ w.document.write(`<title>Extrato pág. ${i+1}</title><body style="margin:0;background:#111"><img src="${e.img}" style="width:100%">`); } };
     d.querySelectorAll('button').forEach(b=>b.onclick=()=>acaoExtrato(b.dataset.a,i));
     G.appendChild(d);
@@ -970,6 +989,7 @@ async function gerarPDFExtrato(num){
   for(let i=0;i<extrato.length;i++){
     if(i>0) doc.addPage();
     const top = i===0 ? 31 : M, ah = H-top-14, aw = W-2*M;
+    if(!extrato[i].img) continue;
     const img=await carregarImagem(extrato[i].img); const r=Math.min(aw/img.naturalWidth, ah/img.naturalHeight);
     const iw=img.naturalWidth*r, ih=img.naturalHeight*r;
     doc.addImage(extrato[i].img,'JPEG',M+(aw-iw)/2,top,iw,ih,undefined,'FAST');
@@ -985,7 +1005,7 @@ $('#btnExtGerar').onclick=()=>{
   if(!extrato.length){ toast('Adicione as fotos do extrato.'); return; }
   const num=numExtrato();
   const gerar=async(enviar)=>{
-    $('#btnExtGerar').disabled=true;
+    $('#btnExtGerar').disabled=true; window._ocupado=(window._ocupado||0)+1;
     try{
       stExt('Gerando o PDF…'); extPdf=await gerarPDFExtrato(num); extPdf.num=num;
       if(enviar){
@@ -996,7 +1016,7 @@ $('#btnExtGerar').onclick=()=>{
       }
       stExt(''); abrirExtratoPronto(enviar);
       if(!enviar) baixar(extPdf);
-    } finally { $('#btnExtGerar').disabled=false; renderExtrato(); }
+    } finally { window._ocupado--; $('#btnExtGerar').disabled=false; renderExtrato(); }
   };
   if(cfgGet().clientId) comDrive(()=>gerar(true), s=>stExt(s));
   else gerar(false).catch(e=>stExt('Erro: '+e.message));
@@ -1028,11 +1048,12 @@ $('#extRefazer').onclick=()=>{
 /* ================= Google Drive ================= */
 const SCOPE='https://www.googleapis.com/auth/drive.file', PASTA='Notas de Consumo';
 let tokenClient=null, token=null, tokenExp=0, pend=null, pastaId=null;
+try{ const tk=JSON.parse(localStorage.getItem('nc_tok')||'null'); if(tk && tk.e>Date.now()){ token=tk.t; tokenExp=tk.e; } }catch(e){}
 function iniciarGoogle(){
   const cid=cfgGet().clientId; if(!cid) return;
   const init=()=>{ try{
     tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid, scope:SCOPE,
-      callback:r=>{ const p=pend; pend=null; if(!p) return; if(r.error) p.rej(new Error(r.error_description||r.error)); else { token=r.access_token; tokenExp=Date.now()+(r.expires_in-60)*1000; p.res(); } },
+      callback:r=>{ const p=pend; pend=null; if(!p) return; if(r.error) p.rej(new Error(r.error_description||r.error)); else { token=r.access_token; tokenExp=Date.now()+(r.expires_in-60)*1000; try{ localStorage.setItem('nc_tok',JSON.stringify({t:token,e:tokenExp})); }catch(e){} p.res(); agendarPush(3000); } },
       error_callback:e=>{ const p=pend; pend=null; if(p) p.rej(new Error(e.type==='popup_closed'?'Login cancelado':(e.message||e.type))); } });
   }catch(e){ console.error(e); } };
   if(window.google&&google.accounts&&google.accounts.oauth2) return init();
@@ -1050,7 +1071,7 @@ function comDrive(fn,status){
 async function gfetch(url,opt={}){
   opt.headers=Object.assign({},opt.headers,{Authorization:'Bearer '+token});
   const r=await fetch(url,opt);
-  if(!r.ok){ const t=await r.text(); const err=new Error(`Drive ${r.status}: ${t.slice(0,160)}`); err.status=r.status; throw err; }
+  if(!r.ok){ const t=await r.text(); const err=new Error(`Drive ${r.status}: ${t.slice(0,160)}`); err.status=r.status; if(r.status===401){ token=null; try{localStorage.removeItem('nc_tok');}catch(e){} setSync('desconectado'); } throw err; }
   return r;
 }
 async function drivePasta(){
@@ -1066,7 +1087,7 @@ async function driveUpload({nome,blob,pasta,fileId}){
   fd.append('metadata',new Blob([JSON.stringify(fileId?{name:nome}:{name:nome,parents:[pasta]})],{type:'application/json'}));
   fd.append('file',blob);
   const base='https://www.googleapis.com/upload/drive/v3/files';
-  const qs='?uploadType=multipart&fields=id,name,webViewLink';
+  const qs='?uploadType=multipart&fields=id,name,webViewLink,modifiedTime';
   if(fileId){
     try{ return await (await gfetch(`${base}/${fileId}${qs}`,{method:'PATCH',body:fd})).json(); }
     catch(e){ if(e.status!==404) throw e; return driveUpload({nome,blob,pasta}); }
@@ -1100,6 +1121,152 @@ $('#btnDriveAbrir').onclick=()=>comDrive(async()=>{
     L.appendChild(b);
   });
 });
+
+/* ================= sincronização automática com o Drive ================= */
+const ARQ_SYNC='dados-notas-consumo.json', PASTA_DADOS='_dados do app (não apagar)';
+let SY={atualizado:0, ultimoSync:0, remoteId:null, remoteModified:null, imgMap:{}};
+let syncing=false, pushTimer=null, suprimir=0, pastaDadosId=null;
+function hashStr(s){ let h=5381; const step=Math.max(1,Math.floor(s.length/4000)); for(let i=0;i<s.length;i+=step) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36)+s.length.toString(36); }
+const chaveImg = rec => rec.id+'_'+hashStr(rec.img);
+function blobParaDataURL(b){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(b); }); }
+async function carregarSync(){ SY=Object.assign(SY, (await DB.getKey('sync'))||{}); if(!SY.imgMap) SY.imgMap={}; }
+function salvarSY(){ return DB.setKey('sync',SY,true); }
+function aoAlterar(){ if(suprimir) return; SY.atualizado=Date.now(); salvarSY(); agendarPush(); }
+function agendarPush(ms=2500){ if(!cfgGet().clientId) return; clearTimeout(pushTimer); if(!tokenOk()){ setSync('pendente'); return; } setSync('pendente'); pushTimer=setTimeout(()=>push().catch(erroSync),ms); }
+function tokenOk(){ return !!token && Date.now()<tokenExp; }
+function erroSync(e){ console.error(e); syncing=false; if(e&&e.status===401){ token=null; setSync('desconectado'); } else setSync('erro', e&&e.message); }
+function setSync(estado,det){
+  const el=$('#syncBar'); if(!el) return;
+  if(!cfgGet().clientId){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  if(!tokenOk() && !['verificando','salvando','baixando'].includes(estado)) estado = (SY.atualizado>SY.ultimoSync && (notas.length||pedidos.length||extrato.length)) ? 'pendente-off' : 'desconectado';
+  const hora=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const txt={
+    'desconectado':'Drive desconectado · toque para sincronizar',
+    'pendente-off':'Alterações não enviadas ao Drive · toque para sincronizar',
+    'pendente':'Salvando no Drive…',
+    'verificando':'Sincronizando com o Drive…',
+    'salvando': det||'Salvando no Drive…',
+    'baixando': det||'Baixando dados do Drive…',
+    'ok':`Sincronizado com o Drive às ${hora(SY.ultimoSyncEm||Date.now())}`,
+    'erro':'Erro ao sincronizar · toque para tentar de novo',
+  }[estado]||estado;
+  el.dataset.estado=estado; $('#syncTxt').textContent=txt;
+}
+$('#syncBar').onclick=()=>{ comDrive(()=>sincronizar(true), s=>{ if(/^Erro/.test(s)) setSync('erro'); else if(/Aguardando/.test(s)) $('#syncTxt').textContent='Aguardando login do Google…'; else $('#syncTxt').textContent=s; }); };
+
+async function obterPastaDados(){
+  if(pastaDadosId) return pastaDadosId;
+  const pasta=await drivePasta();
+  const q=encodeURIComponent(`name='${PASTA_DADOS}' and '${pasta}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const j=await (await gfetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`)).json();
+  if(j.files&&j.files.length) return pastaDadosId=j.files[0].id;
+  const c=await (await gfetch('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:PASTA_DADOS,mimeType:'application/vnd.google-apps.folder',parents:[pasta]})})).json();
+  return pastaDadosId=c.id;
+}
+async function metaRemota(){
+  const pd=await obterPastaDados();
+  if(SY.remoteId){
+    try{ const m=await (await gfetch(`https://www.googleapis.com/drive/v3/files/${SY.remoteId}?fields=id,modifiedTime,trashed`)).json(); if(!m.trashed) return m; }
+    catch(e){ if(e.status!==404) throw e; }
+  }
+  const q=encodeURIComponent(`name='${ARQ_SYNC}' and '${pd}' in parents and trashed=false`);
+  const j=await (await gfetch(`https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime desc&fields=files(id,modifiedTime)`)).json();
+  const m=(j.files&&j.files[0])||null; SY.remoteId=m?m.id:null; return m;
+}
+
+async function push(forcar){
+  if(!cfgGet().clientId) return;
+  if(window._ocupado>0){ agendarPush(); return; }
+  if(!tokenOk()){ setSync('pendente-off'); return; }
+  if(syncing){ agendarPush(); return; }
+  syncing=true; setSync('salvando');
+  try{
+    if(!forcar){
+      const m=await metaRemota();
+      if(m && m.modifiedTime!==SY.remoteModified){ syncing=false; return sincronizar(); }
+    }
+    const pd=await obterPastaDados();
+    const refs=new Set(); let novas=0;
+    const conv=async rec=>{
+      if(!rec.img) return {...rec};
+      const k=chaveImg(rec); refs.add(k);
+      if(!SY.imgMap[k]){ novas++; setSync('salvando',`Enviando fotos ao Drive (${novas})…`);
+        const blob=await (await fetch(rec.img)).blob(); const f=await driveUpload({nome:k+'.jpg',blob,pasta:pd}); SY.imgMap[k]=f.id; await salvarSY(); }
+      const {img,...r}=rec; return {...r, imgRef:k};
+    };
+    const obj={app:'notas-consumo',versao:3,atualizado:SY.atualizado||Date.now(),meta,notas:[],pedidos:[],extrato:[],extDrive,imgMap:{}};
+    for(const n of notas) obj.notas.push(await conv(n));
+    for(const p of pedidos){ const q={...p,notas:[]}; for(const n of p.notas) q.notas.push(await conv(n)); obj.pedidos.push(q); }
+    for(const e of extrato) obj.extrato.push(await conv(e));
+    refs.forEach(k=>obj.imgMap[k]=SY.imgMap[k]);
+    setSync('salvando');
+    const f=await driveUpload({nome:ARQ_SYNC, blob:new Blob([JSON.stringify(obj)],{type:'application/json'}), pasta:pd, fileId:SY.remoteId});
+    SY.remoteId=f.id; SY.remoteModified=f.modifiedTime; SY.ultimoSync=obj.atualizado; SY.ultimoSyncEm=Date.now();
+    const orfas=Object.keys(SY.imgMap).filter(k=>!refs.has(k)).slice(0,15);
+    for(const k of orfas){ try{ await gfetch(`https://www.googleapis.com/drive/v3/files/${SY.imgMap[k]}`,{method:'DELETE'}); }catch(e){} delete SY.imgMap[k]; }
+    await salvarSY(); syncing=false; setSync('ok');
+    if(SY.atualizado>SY.ultimoSync) agendarPush(1000);
+  }catch(e){ syncing=false; throw e; }
+}
+
+async function sincronizar(manual){
+  if(!cfgGet().clientId) return;
+  if(window._ocupado>0){ agendarPush(); return; }
+  if(!tokenOk()){ setSync('desconectado'); return; }
+  if(syncing) return;
+  syncing=true; setSync('verificando');
+  try{
+    const m=await metaRemota();
+    const localMudou=SY.atualizado>SY.ultimoSync;
+    const temLocal=notas.length||pedidos.length||extrato.length;
+    if(!m){ syncing=false; return push(true); }
+    const remotoMudou=m.modifiedTime!==SY.remoteModified;
+    if(!remotoMudou){ syncing=false; if(localMudou) return push(true); SY.ultimoSyncEm=Date.now(); setSync('ok'); return; }
+    if(localMudou && temLocal){
+      const msg = SY.ultimoSync
+        ? 'Há alterações novas neste aparelho e também no Google Drive (feitas em outro aparelho).\n\nOK = usar os dados do Drive (descarta as alterações deste aparelho desde a última sincronização)\nCancelar = manter os dados deste aparelho e enviar para o Drive'
+        : 'Já existem dados do app salvos no seu Google Drive.\n\nOK = carregar os dados do Drive neste aparelho (substitui os daqui)\nCancelar = manter os dados deste aparelho e substituir os do Drive';
+      if(!confirm(msg)){ syncing=false; return push(true); }
+    }
+    await baixarRemoto(m);
+    syncing=false;
+  }catch(e){ syncing=false; throw e; }
+}
+
+async function baixarRemoto(m){
+  setSync('baixando');
+  const obj=await (await gfetch(`https://www.googleapis.com/drive/v3/files/${m.id}?alt=media`)).json();
+  if(!obj||obj.app!=='notas-consumo') throw new Error('Arquivo de dados inválido no Drive');
+  const cache=new Map(); const idx=r=>{ if(r.img) cache.set(chaveImg(r),r.img); };
+  notas.forEach(idx); pedidos.forEach(p=>p.notas.forEach(idx)); extrato.forEach(idx);
+  let baixadas=0;
+  const res=async r=>{
+    if(!r.imgRef) return r;
+    let img=cache.get(r.imgRef);
+    if(!img){ const fid=(obj.imgMap||{})[r.imgRef]; if(fid){ try{ baixadas++; setSync('baixando',`Baixando fotos do Drive (${baixadas})…`); img=await blobParaDataURL(await (await gfetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media`)).blob()); }catch(e){ console.warn('foto não encontrada',r.imgRef); } } }
+    const {imgRef,...x}=r; return {...x, img:img||null};
+  };
+  const nN=[]; for(const n of obj.notas||[]) nN.push(await res(n));
+  const nP=[]; for(const p of obj.pedidos||[]){ const q={...p,notas:[]}; for(const n of p.notas||[]) q.notas.push(await res(n)); nP.push(q); }
+  const nE=[]; for(const e of obj.extrato||[]) nE.push(await res(e));
+  suprimir++;
+  try{
+    await DB.clear(); for(const n of nN) await DB.put(n);
+    for(const p of pedidos) await DB.pedDel(p.id); for(const p of nP) await DB.pedPut(p);
+    await DB.extClear(); for(const e of nE) await DB.extPut(e);
+    meta=obj.meta; await DB.setMeta(meta);
+    extDrive=obj.extDrive||{}; await DB.setKey('extDrive',extDrive);
+  } finally { suprimir--; }
+  notas=nN; pedidos=nP; extrato=nE.sort((a,b)=>a.ordem-b.ordem);
+  Object.keys(pdfCache).forEach(k=>delete pdfCache[k]);
+  Object.assign(SY.imgMap, obj.imgMap||{});
+  SY.remoteId=m.id; SY.remoteModified=m.modifiedTime; SY.atualizado=SY.ultimoSync=obj.atualizado||Date.now(); SY.ultimoSyncEm=Date.now();
+  await salvarSY();
+  window._extNumManual=false; render(); renderExtrato(); setSync('ok');
+  toast('Dados atualizados com o Google Drive');
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && tokenOk() && !syncing) sincronizar().catch(erroSync); });
 
 /* ================= início ================= */
 carregar().catch(e=>{ console.error(e); toast('Erro ao abrir o banco local: '+e.message,6000); });
